@@ -22,7 +22,7 @@ namespace FaceLandmarks
 	}
 	void CalculateFeaturePoints(int ID)
 	{
-		//Kod funkcji main z porgramu FaceLandmark
+		//Kod funkcji main z porgramu FaceLandmarkjjj
 
 
 
