@@ -6,6 +6,22 @@
 
 namespace FaceLandmarks
 {
+	//Pomocniczna klasa do konwersji vectora charow do istream 
+	class DataBuf : public streambuf
+	{
+	public:
+		DataBuf(char * d, size_t s)
+		{
+			setg(d, d, d + s);
+		}
+	};
+
+	double RoundToTwoDigits(double value)
+	{
+		return (round(value * 100) / 100);
+
+	}
+
 	double Add(double a, double b)
 	{
 		return a + b;
@@ -24,10 +40,250 @@ namespace FaceLandmarks
 			throw invalid_argument("b cannot be zero!");
 		return a / b;
 	}
-	void CalculateFeaturePoints(int ID)
+	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
+	//wszystkie napisy które dostajemy ida do okienka output.
+	void CalculateFrontFeaturePoints(int ID)
 	{
 		//Kod funkcji main z porgramu FaceLandmarkjjj
+		try 
+		{
+#pragma region  Pobranie zdjêcia z bazy danych
+			//konwersja int przez string  na SQL string
+			sql::SQLString userIDstring = std::to_string(ID).c_str();
 
+			//Pobranie zdjêcia z bazy danych
+			SqlConnection * Con = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+			Con->Connect();
+			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");
+					//cv::imshow("Image", imageFromDatabase); //show the image
+					//cv::waitKey();
+			//Zakonczenie polaczenia
+			delete Con;
+
+#pragma endregion
+
+#pragma region Kalibracja Obrazu
+			//Kalibracja obrazu
+			float calibrationSquareDimension = 8; //mm 14,5 dla tego standardowego 8 dla tego dla okulaorw
+			const cv::Size boardDomensions = cv::Size(3, 3);
+			std::vector<cv::Point2f> pointBuf;
+
+
+
+			Calibrate calib(calibrationSquareDimension, pointBuf, boardDomensions);
+			//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
+			calib.LoadImageToCalibration(imageFromDatabase);    //LOAD IMAGE FROM DATABASE
+					//calib.ShowLoadedImage();
+			if (calib.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
+			{
+				cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
+				cv::waitKey();
+
+				exit(0);
+			}
+			double mmScaleFactor = calib.CalculateScaleFactor();
+			
+			//-- end Image Calibration -------------------------------------------------
+#pragma endregion
+
+#pragma region Feature Detection
+
+			// DETECT LANDMARKS -------------------------------------------------------------------------------------------
+			//FaceLandmark detectFace("Kalibracja_" + filename);
+			FaceLandmark detectFace(calib.GetKalibratedImage());
+
+			
+			detectFace.detect_face_and_features();
+			//Show detected faces on window
+			detectFace.show_detected_faces();
+					//detectFace.show_face_chips();
+
+			const dlib::point leftEye = detectFace.get_lefteye_point();
+			const dlib::point rightEye = detectFace.get_righteye_point();
+			// Wyliczanie odleg³osci
+			double eyeDistance = length(leftEye - rightEye);
+			double cheekToCheekDistance = detectFace.calculate_face_width();
+			double templeDistance = detectFace.calculate_temple_distance();
+			std::vector<double> noseToEyesDistances = detectFace.calculate_eye_nose_distance();
+
+			//Wyznaczanie punktow
+			dlib::point rightCheek = detectFace.extract_specified_point_from_detected_landmarks(0);
+			dlib::point leftCheek = detectFace.extract_specified_point_from_detected_landmarks(16);
+			dlib::point rightTemple = detectFace.extract_specified_point_from_detected_landmarks(17);
+			dlib::point leftTemple = detectFace.extract_specified_point_from_detected_landmarks(26);
+			dlib::point middleNose = detectFace.extract_specified_point_from_detected_landmarks(27);
+
+			//Rysowanie odleglosci na obrazie
+			draw_line(detectFace.image, leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));
+			draw_line(detectFace.image, rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
+			draw_line(detectFace.image, leftTemple, rightTemple, dlib::rgb_pixel(0, 0, 255));
+			draw_line(detectFace.image, middleNose, rightEye, dlib::rgb_pixel(255, 0, 255));
+			draw_line(detectFace.image, middleNose, leftEye, dlib::rgb_pixel(204, 153, 0));
+
+			detectFace.save_processed_file("Result");
+
+
+			//Odczytywanie wspolrzednych punktow			
+			Point2D leftEyeP(leftEye.x(), leftEye.y());
+			Point2D rightEyeP(rightEye.x(), rightEye.y());
+			
+			Point2D rightCheekP(rightCheek.x(), rightCheek.y());
+			Point2D leftCheekP(leftCheek.x(), leftCheek.y());
+			
+			Point2D rightTempleP(rightTemple.x(), rightTemple.y());
+			Point2D leftTempleP(leftTemple.x(), leftTemple.y());
+			
+			Point2D noseP(middleNose.x(), middleNose.y());
+
+
+			//Wczytanie zdjecia zapisanego przez FaceLandmark 
+			cv::Mat imageToDatabase;
+			cv::Mat processedImage = dlib::toMat(detectFace.image);
+			cv::cvtColor(processedImage, imageToDatabase, CV_BGR2RGB);
+
+			cv::imshow("ImageToDatabase", imageToDatabase); //show the image
+			cv::waitKey();
+
+			// TODO: Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
+			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
+
+			std::vector<unsigned char> dataImageBuffer;
+			// KODOWANIE OBRAZU DO BUFFORA
+			cv::imencode(".jpg", imageToDatabase, dataImageBuffer);
+			// DZIALAJACA KONVERSA
+			DataBuf buffer((char*)(&dataImageBuffer[0]), dataImageBuffer.size());
+			std::istream image(&buffer);
+			std::istream *pimage;
+			pimage = &image;
+
+#pragma endregion
+
+#pragma region Wysy³anie danych do bazy
+			//TODO: lepiej przechowywaæ informacje o po³¹czeniu do bazy
+			SqlConnection *sendData = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+			sendData->Connect();
+			sendData->CustomerUpdateStatement
+			(
+				RoundToTwoDigits(eyeDistance*mmScaleFactor),
+				RoundToTwoDigits(cheekToCheekDistance*mmScaleFactor),
+				RoundToTwoDigits(templeDistance*mmScaleFactor),
+				RoundToTwoDigits(noseToEyesDistances[0] * mmScaleFactor),
+				RoundToTwoDigits(noseToEyesDistances[1] * mmScaleFactor),
+				pimage, //TODO: Ostatecznie nie bedzie wysylc przetworzonego zdjecia do bazy
+				ID // id klienta
+			);
+
+			int currentIdCount = sendData->GetRowCount("Punkty");
+			// Insert to coordinates table
+			sendData->CoordinatesInsertStatement
+			(
+				currentIdCount + 1,
+				leftTempleP,
+				rightTempleP,
+				noseP,
+				leftEyeP,
+				rightEyeP,
+				leftCheekP,
+				rightCheekP,
+				mmScaleFactor,
+				ID		//id klienta
+			);
+
+
+			delete sendData;
+
+
+#pragma endregion
+
+
+		}
+		catch (exception& ex)
+		{
+
+			cout << "\nexception thrown!" << endl;
+			cout << ex.what() << endl;
+			cin.get();
+
+
+
+		}
+
+	}
+
+
+	void CalculateProfileFeaturePoints(int ID)
+	{
+		try 
+		{
+
+			sql::SQLString userIDstring = std::to_string(ID).c_str();
+
+#pragma region Przetwarzanie zdjecia z profilu
+			//Przetwarzanie zdjecia z profilu
+
+				SqlConnection * ConProfile = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+				ConProfile->Connect();
+				cv::Mat profileImageFromDatabase = ConProfile->GetProfileImageFromDatabase(userIDstring);//, "Klienci");
+
+						//cv::imshow("Profile Image", profileImageFromDatabase); //show the image
+						//cv::waitKey();
+				//Zakonczenie polaczenia
+				delete ConProfile;
+
+				//Image Calibration ------------------------------------------------------- mozna wykorzystac funkcje cv_image to zmiany Mat na dlibowy format obrazu
+				float calibrationSquareDimension = 8.0f; //mm 14,5 dla tego standardowego 
+				const cv::Size boardDomensions = cv::Size(3, 3);
+				std::vector<cv::Point2f> pointBuffor;
+				
+
+				Calibrate profileCalib(calibrationSquareDimension, pointBuffor, boardDomensions);
+				//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
+				profileCalib.LoadImageToCalibration(profileImageFromDatabase);    //LOAD IMAGE FROM DATABASE
+				profileCalib.ShowLoadedImage();
+				//cv::waitKey();
+				if (profileCalib.FindCorrenrsOnMarker("KalibracjaProfilowe_.jpg") != true)
+				{
+					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
+					cv::waitKey();
+
+					exit(0); //TODO: Mo¿e jakoœ lepiej to rozwi¹zaæ?
+				}
+				double mmProfileScaleFactor = profileCalib.CalculateScaleFactor();
+				
+				//-- end Profile Image Calibration -------------------------------------------------
+
+				//Wyslanie informacji do bazy
+
+				SqlConnection *sendData = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+				sendData->Connect();
+
+
+				int currentIdCount = sendData->GetRowCount("Punkty_Profil");
+				// Insert to coordinates table
+				sendData->CoordinatesInsertStatement //Dodatnie wspolczynika skalowania do tabeli 
+				(
+					currentIdCount + 1,
+					Point2D(0, 0),
+					Point2D(0, 0),
+					mmProfileScaleFactor,
+					ID		//id klienta
+				);
+				//zakonczenie po³¹czenia
+				delete sendData;
+
+			
+
+#pragma endregion
+
+
+
+
+
+		}
+		catch (exception& ex)
+		{
+
+		}
 
 
 	}

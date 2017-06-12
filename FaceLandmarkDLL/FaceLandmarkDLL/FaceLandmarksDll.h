@@ -75,11 +75,13 @@ instructions.  Note that AVX is the fastest but requires a CPU from at least
 using namespace std;
 
 namespace FaceLandmarks
-{// PROGRAM DO IMPORTOWANIA DLL NIE ZNAJDUJE TEGO PRZY POPRAWNYM PODANIU SCEIZKI ;/
+{// ¯eby DLL poprawnie zosta³a zaimportowana w programie trzeba do folderu z DLL face landmark wrzucic szystkie dll od wykorzystywanych bibliotek
+	//OpenCv i od mysql.
 	extern "C" { __declspec(dllexport) double Add(double a, double b); }
 	extern "C" { __declspec(dllexport) double Subtract(double a, double b); }
 	extern "C" { __declspec(dllexport) double Multiply(double a, double b); }
 	extern "C" { __declspec(dllexport) double Divide(double a, double b); }
-	extern "C" { __declspec(dllexport) void CalculateFeaturePoints(int ID); }
+	extern "C" { __declspec(dllexport) void CalculateFrontFeaturePoints(int ID); }
+	extern "C" { __declspec(dllexport) void CalculateProfileFeaturePoints(int ID); }
 
 }
