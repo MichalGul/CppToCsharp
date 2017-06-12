@@ -323,9 +323,6 @@
     <ClCompile Include="FaceLandmark.cpp">
       <Filter>Source Files\FeatureDetection</Filter>
     </ClCompile>
-    <ClCompile Include="FaceLandmarksDll.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\_BIBLIOTEKI\DLIB\dlib-19.3\dlib\external\libjpeg\README">

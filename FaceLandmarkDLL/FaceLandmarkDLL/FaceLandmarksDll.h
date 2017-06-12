@@ -75,7 +75,7 @@ instructions.  Note that AVX is the fastest but requires a CPU from at least
 using namespace std;
 
 namespace FaceLandmarks
-{// PROGRAM DO IMPORTOWANIA DLL NIE ZNAJDUJE TEGO PRZY POPRAWNYM PODANIU SCEIZKI ECH;/
+{// PROGRAM DO IMPORTOWANIA DLL NIE ZNAJDUJE TEGO PRZY POPRAWNYM PODANIU SCEIZKI ;/
 	extern "C" { __declspec(dllexport) double Add(double a, double b); }
 	extern "C" { __declspec(dllexport) double Subtract(double a, double b); }
 	extern "C" { __declspec(dllexport) double Multiply(double a, double b); }

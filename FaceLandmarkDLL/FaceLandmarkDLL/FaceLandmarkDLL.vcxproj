@@ -264,7 +264,6 @@
     </ClCompile>
     <ClCompile Include="FaceLandmark.cpp" />
     <ClCompile Include="FaceLandmarkDLL.cpp" />
-    <ClCompile Include="FaceLandmarksDll.cpp" />
     <ClCompile Include="SqlConnection.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
