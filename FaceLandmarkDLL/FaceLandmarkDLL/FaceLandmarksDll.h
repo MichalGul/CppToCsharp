@@ -72,6 +72,7 @@ instructions.  Note that AVX is the fastest but requires a CPU from at least
 #include <cppconn/prepared_statement.h>
 
 
+
 using namespace std;
 
 namespace FaceLandmarks

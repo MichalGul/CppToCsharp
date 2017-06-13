@@ -275,6 +275,44 @@ void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear
 
 }
 
+//Sprawdzenie czy w tabeli jest ju¿ rekors z danym currentID w tabeli Punkty_profil w kolumnie klient ID -> bo jesli jest i bedzie chcia³o siê
+//wstawiæ to bêdzie 
+bool SqlConnection::CheckIfKlientExists(int ID)
+{
+	sql::SQLString customerID = std::to_string(ID).c_str();
+	try {
+		// Nazwa kolumny bazy musi byc znana		
+		sql::SQLString querry = "SELECT COUNT(Id_klienta) FROM Punkty_profil where Id_klienta = ";
+		sql::SQLString querrymMid = querry.append(customerID);// WHERE id = "; 	
+
+															 //creating statement and executing querry 
+		stmt = con->createStatement();
+		res = stmt->executeQuery(querrymMid);
+		res->next();
+		int result = res->getInt(1);
+		if (result == 1)
+		{
+			return true;
+		}
+		else if(result == 0)
+		{
+			return false;
+		}
+		
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line "
+			<< __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	}
+
+	return false;
+}
+
 int SqlConnection::GetRowCount(sql::SQLString tableName)
 {
 

@@ -4,8 +4,15 @@
 #include "stdafx.h"
 #include "FaceLandmarksDll.h"
 
+
 namespace FaceLandmarks
 {
+	//Connections Strings
+	sql::SQLString host = "localhost";
+	sql::SQLString root = "root";
+	sql::SQLString pass = "gulki1";
+	sql::SQLString databaseName = "lista_klientow";
+
 	//Pomocniczna klasa do konwersji vectora charow do istream 
 	class DataBuf : public streambuf
 	{
@@ -44,7 +51,7 @@ namespace FaceLandmarks
 	//wszystkie napisy które dostajemy ida do okienka output.
 	void CalculateFrontFeaturePoints(int ID)
 	{
-		//Kod funkcji main z porgramu FaceLandmarkjjj
+		//Kod funkcji main z porgramu FaceLandmark
 		try 
 		{
 #pragma region  Pobranie zdjêcia z bazy danych
@@ -52,7 +59,7 @@ namespace FaceLandmarks
 			sql::SQLString userIDstring = std::to_string(ID).c_str();
 
 			//Pobranie zdjêcia z bazy danych
-			SqlConnection * Con = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+			SqlConnection * Con = new SqlConnection(host, root, pass, databaseName);
 			Con->Connect();
 			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");
 					//cv::imshow("Image", imageFromDatabase); //show the image
@@ -68,36 +75,31 @@ namespace FaceLandmarks
 			const cv::Size boardDomensions = cv::Size(3, 3);
 			std::vector<cv::Point2f> pointBuf;
 
-
-
 			Calibrate calib(calibrationSquareDimension, pointBuf, boardDomensions);
 			//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
 			calib.LoadImageToCalibration(imageFromDatabase);    //LOAD IMAGE FROM DATABASE
 					//calib.ShowLoadedImage();
 			if (calib.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
-			{
-				cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
-				cv::waitKey();
+				{
+					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
+					cv::waitKey();
 
-				exit(0);
-			}
-			double mmScaleFactor = calib.CalculateScaleFactor();
+					return;
+				}
+			double mmScaleFactor = calib.CalculateScaleFactor();	
 			
-			//-- end Image Calibration -------------------------------------------------
 #pragma endregion
 
 #pragma region Feature Detection
 
 			// DETECT LANDMARKS -------------------------------------------------------------------------------------------
 			//FaceLandmark detectFace("Kalibracja_" + filename);
-			FaceLandmark detectFace(calib.GetKalibratedImage());
-
-			
+			FaceLandmark detectFace(calib.GetKalibratedImage());			
 			detectFace.detect_face_and_features();
 			//Show detected faces on window
 			detectFace.show_detected_faces();
 					//detectFace.show_face_chips();
-
+			//Wyliczenie pozycji Ÿrenic
 			const dlib::point leftEye = detectFace.get_lefteye_point();
 			const dlib::point rightEye = detectFace.get_righteye_point();
 			// Wyliczanie odleg³osci
@@ -160,7 +162,7 @@ namespace FaceLandmarks
 
 #pragma region Wysy³anie danych do bazy
 			//TODO: lepiej przechowywaæ informacje o po³¹czeniu do bazy
-			SqlConnection *sendData = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+			SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 			sendData->Connect();
 			sendData->CustomerUpdateStatement
 			(
@@ -199,13 +201,9 @@ namespace FaceLandmarks
 		}
 		catch (exception& ex)
 		{
-
 			cout << "\nexception thrown!" << endl;
 			cout << ex.what() << endl;
 			cin.get();
-
-
-
 		}
 
 	}
@@ -219,9 +217,9 @@ namespace FaceLandmarks
 			sql::SQLString userIDstring = std::to_string(ID).c_str();
 
 #pragma region Przetwarzanie zdjecia z profilu
-			//Przetwarzanie zdjecia z profilu
+			//Przetwarzanie zdjecia z profilu			
+				SqlConnection *ConProfile = new SqlConnection(host,root,pass,databaseName);
 
-				SqlConnection * ConProfile = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
 				ConProfile->Connect();
 				cv::Mat profileImageFromDatabase = ConProfile->GetProfileImageFromDatabase(userIDstring);//, "Klienci");
 
@@ -246,45 +244,54 @@ namespace FaceLandmarks
 					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
 					cv::waitKey();
 
-					exit(0); //TODO: Mo¿e jakoœ lepiej to rozwi¹zaæ?
+					return; //TODO: Mo¿e jakoœ lepiej to rozwi¹zaæ?
 				}
 				double mmProfileScaleFactor = profileCalib.CalculateScaleFactor();
 				
 				//-- end Profile Image Calibration -------------------------------------------------
 
+				//TODO: Przed wys³aniem do bazy informacji  sprawdziæ czy ju¿ w tej tabeli jest ten rekord-> jesl tak to nie dodawac nowego
+				//zrobiæ update czy po prostu podaæ tak¹ informacjê?
+
+
+
 				//Wyslanie informacji do bazy
 
-				SqlConnection *sendData = new SqlConnection("localhost", "root", "gulki1", "lista_klientow");
+				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 				sendData->Connect();
+				//TODO: Trzeba to jeszcze przetestowaæ!!!!!!!!!!!!!!!!!!!!!!!!!11
+				bool recordExists = sendData->CheckIfKlientExists(ID);
+				//jezeli nie ma to dodadajemy do tabeli
+				if (recordExists == false)
+				{
+					int currentIdCount = sendData->GetRowCount("Punkty_Profil");
+					// Insert to coordinates table
+					sendData->CoordinatesInsertStatement //Dodatnie wspolczynika skalowania do tabeli 
+					(
+						currentIdCount + 1,
+						Point2D(0, 0),
+						Point2D(0, 0),
+						mmProfileScaleFactor,
+						ID		//id klienta
+					);
+					//zakonczenie po³¹czenia
+				}
+				else
+				{ // jesli jest
+					
+					cout << "Dany rekord juz byl w tabeli" << endl;
 
-
-				int currentIdCount = sendData->GetRowCount("Punkty_Profil");
-				// Insert to coordinates table
-				sendData->CoordinatesInsertStatement //Dodatnie wspolczynika skalowania do tabeli 
-				(
-					currentIdCount + 1,
-					Point2D(0, 0),
-					Point2D(0, 0),
-					mmProfileScaleFactor,
-					ID		//id klienta
-				);
-				//zakonczenie po³¹czenia
+				}
 				delete sendData;
-
-			
-
-#pragma endregion
-
-
-
-
 
 		}
 		catch (exception& ex)
 		{
-
+			cout << "\nexception thrown!" << endl;
+			cout << ex.what() << endl;
+			cin.get();
 		}
-
+#pragma endregion
 
 	}
 }

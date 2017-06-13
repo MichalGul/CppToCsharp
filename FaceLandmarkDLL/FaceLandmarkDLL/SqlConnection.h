@@ -41,7 +41,7 @@ public:
 	void CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,
 		Point2D rightCheek, double scaleFactor, int customerID);
 	void CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, int customerID);
-
+	bool CheckIfKlientExists(int ID);
 	///@brief Get table row count
 	int GetRowCount(sql::SQLString tableName);
 
