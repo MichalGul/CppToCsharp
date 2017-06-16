@@ -36,36 +36,44 @@ FaceLandmark::~FaceLandmark()
 
 
 
-void FaceLandmark::detect_face_and_features()
+bool FaceLandmark::detect_face_and_features()
 {
 	// Now tell the face detector to give us a list of bounding boxes
 	// around all the faces in the image.
 	std::vector<rectangle> dets = faceDetector(image);
-	std::cout << "Number of faces detected: " << dets.size() << std::endl;
-	// Now we will go ask the shape_predictor to tell us the pose of
-	// each face we detected.
-
-	for (unsigned long j = 0; j < dets.size(); ++j)
+	if (dets.size() == 0)
 	{
-		full_object_detection shape = shapePredictor(image, dets[j]);
+		return false;
+	}
+	else
+	{
+		std::cout << "Number of faces detected: " << dets.size() << std::endl;
+		// Now we will go ask the shape_predictor to tell us the pose of
+		// each face we detected.
 
-		// rysowanie wyznaczonych punktów charakterystycznych
-		for (unsigned long k = 0; k < shape.num_parts(); k++)
+		for (unsigned long j = 0; j < dets.size(); ++j)
 		{
-			dlib::point p = shape.part(k);
-			draw_solid_circle(image, p, 2, dlib::rgb_pixel(0, 255, 255));
+			full_object_detection shape = shapePredictor(image, dets[j]);
+
+			// rysowanie wyznaczonych punktów charakterystycznych
+			for (unsigned long k = 0; k < shape.num_parts(); k++)
+			{
+				dlib::point p = shape.part(k);
+				draw_solid_circle(image, p, 2, dlib::rgb_pixel(0, 255, 255));
+			}
+
+
+			std::cout << "number of parts: " << shape.num_parts() << std::endl;
+			std::cout << "pixel position of first part:  " << shape.part(0) << std::endl;
+			std::cout << "pixel position of second part: " << shape.part(1) << std::endl;
+			// You get the idea, you can get all the face part locations if
+			// you want them.  Here we just store them in shapes so we can
+			// put them on the screen.
+			faces.push_back(shape);
 		}
 
-
-		std::cout << "number of parts: " << shape.num_parts() << std::endl;
-		std::cout << "pixel position of first part:  " << shape.part(0) << std::endl;
-		std::cout << "pixel position of second part: " << shape.part(1) << std::endl;
-		// You get the idea, you can get all the face part locations if
-		// you want them.  Here we just store them in shapes so we can
-		// put them on the screen.
-		faces.push_back(shape);
+		return true;
 	}
-
 }
 
 void FaceLandmark::show_detected_faces()

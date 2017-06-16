@@ -82,7 +82,7 @@ namespace FaceLandmarks
 	extern "C" { __declspec(dllexport) double Subtract(double a, double b); }
 	extern "C" { __declspec(dllexport) double Multiply(double a, double b); }
 	extern "C" { __declspec(dllexport) double Divide(double a, double b); }
-	extern "C" { __declspec(dllexport) void CalculateFrontFeaturePoints(int ID); }
-	extern "C" { __declspec(dllexport) void CalculateProfileFeaturePoints(int ID); }
+	extern "C" { __declspec(dllexport) bool CalculateFrontFeaturePoints(int ID); }
+	extern "C" { __declspec(dllexport) bool CalculateProfileFeaturePoints(int ID); }
 
 }

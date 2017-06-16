@@ -49,7 +49,7 @@ namespace FaceLandmarks
 	}
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
 	//wszystkie napisy które dostajemy ida do okienka output.
-	void CalculateFrontFeaturePoints(int ID)
+	bool CalculateFrontFeaturePoints(int ID)
 	{
 		//Kod funkcji main z porgramu FaceLandmark
 		try 
@@ -82,9 +82,9 @@ namespace FaceLandmarks
 			if (calib.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
 				{
 					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
-					cv::waitKey();
+					//cv::waitKey();
 
-					return;
+					return false;
 				}
 			double mmScaleFactor = calib.CalculateScaleFactor();	
 			
@@ -94,10 +94,15 @@ namespace FaceLandmarks
 
 			// DETECT LANDMARKS -------------------------------------------------------------------------------------------
 			//FaceLandmark detectFace("Kalibracja_" + filename);
-			FaceLandmark detectFace(calib.GetKalibratedImage());			
-			detectFace.detect_face_and_features();
+			FaceLandmark detectFace(calib.GetKalibratedImage());	
+			auto isDetected = detectFace.detect_face_and_features();
+			if(isDetected == false)
+			{
+				return false;
+			}
+			std::cout << "POPOPOPO";
 			//Show detected faces on window
-			detectFace.show_detected_faces();
+			//detectFace.show_detected_faces();
 					//detectFace.show_face_chips();
 			//Wyliczenie pozycji Ÿrenic
 			const dlib::point leftEye = detectFace.get_lefteye_point();
@@ -137,14 +142,16 @@ namespace FaceLandmarks
 			
 			Point2D noseP(middleNose.x(), middleNose.y());
 
+#pragma region Przygotowanie zdjêcia do wys³ania do bazy
 
 			//Wczytanie zdjecia zapisanego przez FaceLandmark 
 			cv::Mat imageToDatabase;
 			cv::Mat processedImage = dlib::toMat(detectFace.image);
 			cv::cvtColor(processedImage, imageToDatabase, CV_BGR2RGB);
 
-			cv::imshow("ImageToDatabase", imageToDatabase); //show the image
-			cv::waitKey();
+			cv::namedWindow("Wyniki", cv::WINDOW_NORMAL);
+			cv::imshow("Wyniki", imageToDatabase); //show the image
+			//cv::waitKey(0);
 
 			// TODO: Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
 			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
@@ -157,7 +164,7 @@ namespace FaceLandmarks
 			std::istream image(&buffer);
 			std::istream *pimage;
 			pimage = &image;
-
+#pragma endregion
 #pragma endregion
 
 #pragma region Wysy³anie danych do bazy
@@ -202,7 +209,7 @@ namespace FaceLandmarks
 			}
 
 			delete sendData;
-
+			return true;
 
 #pragma endregion
 
@@ -212,13 +219,14 @@ namespace FaceLandmarks
 		{
 			cout << "\nexception thrown!" << endl;
 			cout << ex.what() << endl;
+			return false;
 			cin.get();
 		}
 
 	}
 
 
-	void CalculateProfileFeaturePoints(int ID)
+	bool CalculateProfileFeaturePoints(int ID)
 	{
 		try 
 		{
@@ -246,14 +254,14 @@ namespace FaceLandmarks
 				Calibrate profileCalib(calibrationSquareDimension, pointBuffor, boardDomensions);
 				//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
 				profileCalib.LoadImageToCalibration(profileImageFromDatabase);    //LOAD IMAGE FROM DATABASE
-				profileCalib.ShowLoadedImage();
+						//profileCalib.ShowLoadedImage();
 				//cv::waitKey();
 				if (profileCalib.FindCorrenrsOnMarker("KalibracjaProfilowe_.jpg") != true)
 				{
 					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
-					cv::waitKey();
+					//cv::waitKey();
 
-					return; //TODO: Mo¿e jakoœ lepiej to rozwi¹zaæ?
+					return false;
 				}
 				double mmProfileScaleFactor = profileCalib.CalculateScaleFactor();
 				
@@ -292,6 +300,7 @@ namespace FaceLandmarks
 				}
 				delete sendData;
 
+				return true;
 		}
 		catch (exception& ex)
 		{

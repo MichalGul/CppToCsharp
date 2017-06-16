@@ -35,7 +35,7 @@ public:
 
 																// Update Current record in database -> TBD nie za duzo parametrow tej funkcji ???
 	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, std::istream *imageStream, int ID);
-	//TBD czy to bedzie potrzebne?
+	
 	void CustomerInsertStatement();
 	// Insert new set of coordinates to database
 	void CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,

@@ -36,10 +36,11 @@ bool Calibrate::FindCorrenrsOnMarker(std::string fileNameToSave)
 	if (found && points.size() <= 9)
 	{
 		//drowing points on image
-		cv::drawChessboardCorners(image, boardDimension, points, found);
+		cv::drawChessboardCorners(image, boardDimension, points, found);		
+		cv::namedWindow("Looking for Corners", cv::WINDOW_NORMAL);
 		imshow("Looking for Corners", image);
 		imwrite(fileNameToSave, image);
-		cv::waitKey();
+		//cv::waitKey();
 
 	}
 	else

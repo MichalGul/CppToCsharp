@@ -55,7 +55,7 @@ public:
 
 
 	/// @brief Methood to detect faces on image
-	void detect_face_and_features();
+	bool detect_face_and_features();
 	/// @brief Display detected face on image
 	void show_detected_faces();
 	/// @brief Display little images of detected faces
