@@ -161,7 +161,7 @@ namespace FaceLandmarks
 #pragma endregion
 
 #pragma region Wysy³anie danych do bazy
-			//TODO: lepiej przechowywaæ informacje o po³¹czeniu do bazy
+			
 			SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 			sendData->Connect();
 			sendData->CustomerUpdateStatement
@@ -177,20 +177,29 @@ namespace FaceLandmarks
 
 			int currentIdCount = sendData->GetRowCount("Punkty");
 			// Insert to coordinates table
-			sendData->CoordinatesInsertStatement
-			(
-				currentIdCount + 1,
-				leftTempleP,
-				rightTempleP,
-				noseP,
-				leftEyeP,
-				rightEyeP,
-				leftCheekP,
-				rightCheekP,
-				mmScaleFactor,
-				ID		//id klienta
-			);
+			//Sprawdzenie czy rekord o danym id klienta juz istnieje
+			bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty");
 
+			if (recordExists == false)
+			{
+				sendData->CoordinatesInsertStatement
+				(
+					currentIdCount + 1,
+					leftTempleP,
+					rightTempleP,
+					noseP,
+					leftEyeP,
+					rightEyeP,
+					leftCheekP,
+					rightCheekP,
+					mmScaleFactor,
+					ID		//id klienta
+				);
+			}
+			else
+			{
+				cout << "Rekord ju¿ jest w tabeli" << endl;
+			}
 
 			delete sendData;
 
@@ -250,8 +259,7 @@ namespace FaceLandmarks
 				
 				//-- end Profile Image Calibration -------------------------------------------------
 
-				//TODO: Przed wys³aniem do bazy informacji  sprawdziæ czy ju¿ w tej tabeli jest ten rekord-> jesl tak to nie dodawac nowego
-				//zrobiæ update czy po prostu podaæ tak¹ informacjê?
+				
 
 
 
@@ -259,8 +267,8 @@ namespace FaceLandmarks
 
 				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 				sendData->Connect();
-				//TODO: Trzeba to jeszcze przetestowaæ!!!!!!!!!!!!!!!!!!!!!!!!!11
-				bool recordExists = sendData->CheckIfKlientExists(ID);
+				//TODO: Trzeba to jeszcze przetestowaæ!!!!!!!!!!!!!!!!!!!!!!!!!
+				bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty_profil");
 				//jezeli nie ma to dodadajemy do tabeli
 				if (recordExists == false)
 				{
@@ -278,7 +286,7 @@ namespace FaceLandmarks
 				}
 				else
 				{ // jesli jest
-					
+					// TODO: Wymyœleæ jakiœ lepszy komunikat
 					cout << "Dany rekord juz byl w tabeli" << endl;
 
 				}

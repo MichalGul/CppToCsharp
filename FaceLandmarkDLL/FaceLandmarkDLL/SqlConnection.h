@@ -41,7 +41,8 @@ public:
 	void CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,
 		Point2D rightCheek, double scaleFactor, int customerID);
 	void CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, int customerID);
-	bool CheckIfKlientExists(int ID);
+	//Check if specyfied record with specyfied ID exists in profile points table table xd
+	bool CheckIfKlientExists(int ID, std::string tableName);
 	///@brief Get table row count
 	int GetRowCount(sql::SQLString tableName);
 
