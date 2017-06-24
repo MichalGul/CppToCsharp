@@ -33,8 +33,10 @@ public:
 														 //Get Profile image from database (TODO zrobic tak zeby byla jedna funkcji do roznych kolumn a nie 2 odzielne funkcje)
 	cv::Mat GetProfileImageFromDatabase(sql::SQLString imageID);//, sql::SQLString kolumnName);
 
-																// Update Current record in database -> TBD nie za duzo parametrow tej funkcji ???
+	// Update Current record in database with foto
 	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, std::istream *imageStream, int ID);
+	// Update Current record ind database without updatign foto
+	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, int ID);
 	
 	void CustomerInsertStatement();
 	// Insert new set of coordinates to database

@@ -37,8 +37,8 @@ bool Calibrate::FindCorrenrsOnMarker(std::string fileNameToSave)
 	{
 		//drowing points on image
 		cv::drawChessboardCorners(image, boardDimension, points, found);		
-		cv::namedWindow("Looking for Corners", cv::WINDOW_NORMAL);
-		imshow("Looking for Corners", image);
+		cv::namedWindow("Kalibracja Obrazu", cv::WINDOW_NORMAL);
+		imshow("Kalibracja Obrazu", image);
 		imwrite(fileNameToSave, image);
 		//cv::waitKey();
 

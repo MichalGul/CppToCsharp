@@ -184,6 +184,39 @@ void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth
 
 
 }
+//Update klients table bez wstawiania zdjecia
+void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, int ID)
+{
+
+	try
+	{
+		pstmt = con->prepareStatement("UPDATE klienci SET Rozstaw_Zrenic = ?, Szerokosc_Twarzy = ?, Szerokosc_Skroni = ?, PraweOko_Nos = ?, LeweOko_Nos = ? WHERE id = ?");
+		pstmt->setDouble(1, eyeDistance);
+		pstmt->setDouble(2, faceWidth);
+		pstmt->setDouble(3, templeWidth);
+		pstmt->setDouble(4, rightEyeNoseDist);
+		pstmt->setDouble(5, leftEyeNoseDist);		
+		pstmt->setInt(6, ID);
+		pstmt->execute();
+
+
+
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line "
+			<< __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	}
+
+
+
+
+}
+
 // TBD zastanowic sie czy to bedzie tu potrzebne -> update wystarczy
 void SqlConnection::CustomerInsertStatement()
 {

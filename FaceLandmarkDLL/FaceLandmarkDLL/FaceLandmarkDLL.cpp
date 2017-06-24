@@ -100,7 +100,7 @@ namespace FaceLandmarks
 			{
 				return false;
 			}
-			std::cout << "POPOPOPO";
+			std::cout << "TEST";
 			//Show detected faces on window
 			//detectFace.show_detected_faces();
 					//detectFace.show_face_chips();
@@ -153,7 +153,7 @@ namespace FaceLandmarks
 			cv::imshow("Wyniki", imageToDatabase); //show the image
 			//cv::waitKey(0);
 
-			// TODO: Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
+			//TODO: Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
 			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
 
 			std::vector<unsigned char> dataImageBuffer;
@@ -178,7 +178,7 @@ namespace FaceLandmarks
 				RoundToTwoDigits(templeDistance*mmScaleFactor),
 				RoundToTwoDigits(noseToEyesDistances[0] * mmScaleFactor),
 				RoundToTwoDigits(noseToEyesDistances[1] * mmScaleFactor),
-				pimage, //TODO: Ostatecznie nie bedzie wysylc przetworzonego zdjecia do bazy
+							//pimage, //TODO: Ostatecznie nie bedzie wysylc przetworzonego zdjecia do bazy
 				ID // id klienta
 			);
 
@@ -267,15 +267,15 @@ namespace FaceLandmarks
 				
 				//-- end Profile Image Calibration -------------------------------------------------
 
+				//TODO: Lokalizacja punktu na uchu(okolice) i okolice nosa wykorzystuj¹c skalibrowan¹ szachwonicê i znany rozmiar okularów
+
+
 				
-
-
-
 				//Wyslanie informacji do bazy
 
 				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 				sendData->Connect();
-				//TODO: Trzeba to jeszcze przetestowaæ!!!!!!!!!!!!!!!!!!!!!!!!!
+				
 				bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty_profil");
 				//jezeli nie ma to dodadajemy do tabeli
 				if (recordExists == false)
