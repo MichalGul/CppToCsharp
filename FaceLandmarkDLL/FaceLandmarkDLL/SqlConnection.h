@@ -37,12 +37,14 @@ public:
 	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, std::istream *imageStream, int ID);
 	// Update Current record ind database without updatign foto
 	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, int ID);
-	
+	//Update profile distance
+	void CustomerUpdateStatement(double earNoseDistance, int ID);
+
 	void CustomerInsertStatement();
 	// Insert new set of coordinates to database
 	void CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,
 		Point2D rightCheek, double scaleFactor, int customerID);
-	void CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, int customerID);
+	void CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, double earNoseDistance, int customerID);
 	//Check if specyfied record with specyfied ID exists in profile points table table xd
 	bool CheckIfKlientExists(int ID, std::string tableName);
 	///@brief Get table row count

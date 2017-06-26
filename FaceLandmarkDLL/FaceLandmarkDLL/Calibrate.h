@@ -35,6 +35,8 @@ private:
 	std::vector<cv::Point2f> points;
 	/// Calulate points distance
 	double CalculatePointsDistance(cv::Point2f a, cv::Point2f b);
+	/// Image mm to pixel scale factor
+	double imageScaleFactor;
 
 public:
 	/// @brief  Constructor
@@ -58,9 +60,12 @@ public:
 	double CalculateScaleFactor();
 	///@brief Return image after calibration
 	cv::Mat GetKalibratedImage();
-
-
-
-
+	///@brief Locate points specyfied by distance from reference point
+	///[in] X distance
+	///[in] Y dostance
+	///[in] Reference point
+	cv::Point2f GetFeaturePointByDistance(float xDistance, float yDistance, cv::Point2f refPoint);
+	///@brief Get array of calibration points 
+	std::vector<cv::Point2f> Calibrate::GetCalibratedPointsOnChessboard();
 
 };

@@ -217,6 +217,33 @@ void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth
 
 }
 
+void SqlConnection::CustomerUpdateStatement(double earNoseDistance, int ID)
+{
+
+	try
+	{
+		pstmt = con->prepareStatement("UPDATE klienci SET Ucho_Nos = ? WHERE id = ?");
+		pstmt->setDouble(1, earNoseDistance);
+		pstmt->setInt(2, ID);
+		pstmt->execute();
+
+
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line "
+			<< __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	}
+
+
+
+
+}
+
 // TBD zastanowic sie czy to bedzie tu potrzebne -> update wystarczy
 void SqlConnection::CustomerInsertStatement()
 {
@@ -273,7 +300,7 @@ void SqlConnection::CoordinatesInsertStatement(int ID, Point2D leftTemple, Point
 
 }
 
-void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, int customerID)
+void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, double earNoseDistance, int customerID)
 {
 	try
 	{
@@ -284,7 +311,7 @@ void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear
 		pstmt->setInt(3, Nose.Y);
 		pstmt->setInt(4, Ear.X);
 		pstmt->setInt(5, Ear.Y);
-		pstmt->setDouble(6, 0); // TODO: zastanowic sie co tu wstawiac poczatkowa odleg³oœæ 
+		pstmt->setDouble(6, earNoseDistance); 
 		pstmt->setDouble(7, profilescaleFactor);
 		pstmt->setInt(8, customerID);
 

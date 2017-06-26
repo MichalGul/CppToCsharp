@@ -77,11 +77,32 @@ double Calibrate::CalculateScaleFactor()
 	}
 	double averagePixelDistanceOnMarker = distanceSum / distances.size();
 
-
-	return calibrationSquareDimension / averagePixelDistanceOnMarker;
+	imageScaleFactor = calibrationSquareDimension / averagePixelDistanceOnMarker;
+	return imageScaleFactor;
 }
 
 cv::Mat Calibrate::GetKalibratedImage()
 {
 	return image;
+}
+
+cv::Point2f Calibrate::GetFeaturePointByDistance(float xDistance, float yDistance, cv::Point2f refPoint)
+{
+	cv::Point2f exitPoint(0, 0);
+
+	int pixelDistanceX = int(xDistance / imageScaleFactor);
+	int pixelDistanceY = int(yDistance / imageScaleFactor);
+
+	exitPoint.x = refPoint.x - pixelDistanceX;
+	exitPoint.y = refPoint.y + pixelDistanceY;
+
+	return exitPoint;
+
+
+	return cv::Point2f();
+}
+
+std::vector<cv::Point2f> Calibrate::GetCalibratedPointsOnChessboard()
+{
+	return points;
 }

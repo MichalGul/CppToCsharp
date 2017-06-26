@@ -4,8 +4,8 @@
 #include "stdafx.h"
 #include "FaceLandmarksDll.h"
 
-
 namespace FaceLandmarks
+
 {
 	//Connections Strings
 	sql::SQLString host = "localhost";
@@ -120,6 +120,8 @@ namespace FaceLandmarks
 			dlib::point leftTemple = detectFace.extract_specified_point_from_detected_landmarks(26);
 			dlib::point middleNose = detectFace.extract_specified_point_from_detected_landmarks(27);
 
+			//TODO: Wyszukiwanie okrêgów w Ÿrenicy w obrêbie maski wyznaczonej przez punkty z dliba w celu lepszego wyszukiwania œrodka oka
+
 			//Rysowanie odleglosci na obrazie
 			draw_line(detectFace.image, leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));
 			draw_line(detectFace.image, rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
@@ -142,6 +144,8 @@ namespace FaceLandmarks
 			
 			Point2D noseP(middleNose.x(), middleNose.y());
 
+
+
 #pragma region Przygotowanie zdjêcia do wys³ania do bazy
 
 			//Wczytanie zdjecia zapisanego przez FaceLandmark 
@@ -153,7 +157,7 @@ namespace FaceLandmarks
 			cv::imshow("Wyniki", imageToDatabase); //show the image
 			//cv::waitKey(0);
 
-			//TODO: Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
+			// Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
 			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
 
 			std::vector<unsigned char> dataImageBuffer;
@@ -164,6 +168,7 @@ namespace FaceLandmarks
 			std::istream image(&buffer);
 			std::istream *pimage;
 			pimage = &image;
+
 #pragma endregion
 #pragma endregion
 
@@ -258,7 +263,7 @@ namespace FaceLandmarks
 				//cv::waitKey();
 				if (profileCalib.FindCorrenrsOnMarker("KalibracjaProfilowe_.jpg") != true)
 				{
-					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
+					cout << "Nie znaleziono markera na obrazie." << endl;
 					//cv::waitKey();
 
 					return false;
@@ -267,15 +272,17 @@ namespace FaceLandmarks
 				
 				//-- end Profile Image Calibration -------------------------------------------------
 
-				//TODO: Lokalizacja punktu na uchu(okolice) i okolice nosa wykorzystuj¹c skalibrowan¹ szachwonicê i znany rozmiar okularów
-
+				//Lokalizacja punktu ucha i nosa wykorzystuj¹c skalibrowan¹ szachwonicê i znany rozmiar okularów
+				//TODO: Odleg³oœci wpisywane dla okularów mark8 bez kleju beda rózne w zale¿noœci od okularow
+				std::vector<cv::Point2f> calibratedPoints = profileCalib.GetCalibratedPointsOnChessboard();
+				auto earPoint = profileCalib.GetFeaturePointByDistance(53, 15, calibratedPoints[8]);
+				auto nosePoint = profileCalib.GetFeaturePointByDistance(-38, 0, calibratedPoints[2]);
 
 				
 				//Wyslanie informacji do bazy
-
 				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 				sendData->Connect();
-				
+				//Sprawdzenie czy dany rekord jest ju¿ w tabeli
 				bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty_profil");
 				//jezeli nie ma to dodadajemy do tabeli
 				if (recordExists == false)
@@ -285,19 +292,29 @@ namespace FaceLandmarks
 					sendData->CoordinatesInsertStatement //Dodatnie wspolczynika skalowania do tabeli 
 					(
 						currentIdCount + 1,
-						Point2D(0, 0),
-						Point2D(0, 0),
+						Point2D(earPoint.x, earPoint.y), 
+						Point2D(nosePoint.x, nosePoint.y),
 						mmProfileScaleFactor,
+						RoundToTwoDigits(cv::norm(earPoint - nosePoint)*mmProfileScaleFactor),
 						ID		//id klienta
 					);
-					//zakonczenie po³¹czenia
+					
 				}
 				else
-				{ // jesli jest
-					// TODO: Wymyœleæ jakiœ lepszy komunikat
+				{
+					
 					cout << "Dany rekord juz byl w tabeli" << endl;
 
 				}
+				//Update odleg³oœci w glownej tabeli
+				sendData->CustomerUpdateStatement
+				(
+					RoundToTwoDigits(cv::norm(earPoint - nosePoint)*mmProfileScaleFactor),
+					ID
+				);
+
+
+
 				delete sendData;
 
 				return true;
