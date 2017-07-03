@@ -2,6 +2,14 @@
 
 
 
+void FaceLandmark::DrawLineOnImage(dlib::point firstPoint, dlib::point secondPoint, dlib::rgb_pixel color)
+{
+	draw_line(processedImage, firstPoint, secondPoint, color);
+
+}
+
+
+
 FaceLandmark::FaceLandmark(std::string imageName)
 {
 	// We need a face detector.  We will use this to get bounding boxes for
@@ -10,7 +18,7 @@ FaceLandmark::FaceLandmark(std::string imageName)
 	// And we also need a shape_predictor.  This is the tool that will predict face
 	// landmark positions given an image and face bounding box.
 	deserialize("ShapePredictor.dat") >> shapePredictor;
-	dlib::load_image(image, imageName + ".jpg");
+	dlib::load_image(processedImage, imageName + ".jpg");
 
 }
 
@@ -25,7 +33,7 @@ FaceLandmark::FaceLandmark(cv::Mat imageMat)
 	deserialize("ShapePredictor.dat") >> shapePredictor;
 
 	//Convert cvMat to arrady2d
-	dlib::assign_image(image, dlib::cv_image<bgr_pixel>(imageMat));
+	dlib::assign_image(processedImage, dlib::cv_image<bgr_pixel>(imageMat));
 
 
 }
@@ -40,7 +48,7 @@ bool FaceLandmark::detect_face_and_features()
 {
 	// Now tell the face detector to give us a list of bounding boxes
 	// around all the faces in the image.
-	std::vector<rectangle> dets = faceDetector(image);
+	std::vector<rectangle> dets = faceDetector(processedImage);
 	if (dets.size() == 0)
 	{
 		return false;
@@ -53,13 +61,13 @@ bool FaceLandmark::detect_face_and_features()
 
 		for (unsigned long j = 0; j < dets.size(); ++j)
 		{
-			full_object_detection shape = shapePredictor(image, dets[j]);
+			full_object_detection shape = shapePredictor(processedImage, dets[j]);
 
 			// rysowanie wyznaczonych punktów charakterystycznych
 			for (unsigned long k = 0; k < shape.num_parts(); k++)
 			{
 				dlib::point p = shape.part(k);
-				draw_solid_circle(image, p, 2, dlib::rgb_pixel(0, 255, 255));
+				draw_solid_circle(processedImage, p, 2, dlib::rgb_pixel(0, 255, 255));
 			}
 
 
@@ -76,25 +84,12 @@ bool FaceLandmark::detect_face_and_features()
 	}
 }
 
-void FaceLandmark::show_detected_faces()
-{
-	win.clear_overlay();
-	win.set_image(image);
-	win.add_overlay(render_face_detections(faces));
-}
 
-void FaceLandmark::show_face_chips()
-{
-	dlib::array<array2d<rgb_pixel> > face_chips;
-	extract_image_chips(image, get_face_chip_details(faces), face_chips);
-	winFaces.set_image(tile_images(face_chips));
-
-}
 
 void FaceLandmark::save_processed_file(std::string fileName)
 {
 	//by³o save_bmp
-	save_jpeg(image, fileName + ".jpg");
+	save_jpeg(processedImage, fileName + ".jpg");
 }
 
 dlib::point FaceLandmark::extract_specified_point_from_detected_landmarks(int pointNumber)

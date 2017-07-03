@@ -39,8 +39,7 @@ bool Calibrate::FindCorrenrsOnMarker(std::string fileNameToSave)
 		cv::drawChessboardCorners(image, boardDimension, points, found);		
 		cv::namedWindow("Kalibracja Obrazu", cv::WINDOW_NORMAL);
 		imshow("Kalibracja Obrazu", image);
-		imwrite(fileNameToSave, image);
-		//cv::waitKey();
+		imwrite(fileNameToSave, image);		
 
 	}
 	else

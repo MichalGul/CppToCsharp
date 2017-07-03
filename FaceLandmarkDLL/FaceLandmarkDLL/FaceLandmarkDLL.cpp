@@ -47,6 +47,11 @@ namespace FaceLandmarks
 			throw invalid_argument("b cannot be zero!");
 		return a / b;
 	}
+	void CloseAllImageWindows()
+	{
+		cv::destroyAllWindows();
+	}
+
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
 	//wszystkie napisy które dostajemy ida do okienka output.
 	bool CalculateFrontFeaturePoints(int ID)
@@ -96,11 +101,12 @@ namespace FaceLandmarks
 			//FaceLandmark detectFace("Kalibracja_" + filename);
 			FaceLandmark detectFace(calib.GetKalibratedImage());	
 			auto isDetected = detectFace.detect_face_and_features();
+			//Jezeli nie wykryto twarzy
 			if(isDetected == false)
 			{
 				return false;
 			}
-			std::cout << "TEST";
+			
 			//Show detected faces on window
 			//detectFace.show_detected_faces();
 					//detectFace.show_face_chips();
@@ -123,11 +129,11 @@ namespace FaceLandmarks
 			//TODO: Wyszukiwanie okrêgów w Ÿrenicy w obrêbie maski wyznaczonej przez punkty z dliba w celu lepszego wyszukiwania œrodka oka
 
 			//Rysowanie odleglosci na obrazie
-			draw_line(detectFace.image, leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));
-			draw_line(detectFace.image, rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
-			draw_line(detectFace.image, leftTemple, rightTemple, dlib::rgb_pixel(0, 0, 255));
-			draw_line(detectFace.image, middleNose, rightEye, dlib::rgb_pixel(255, 0, 255));
-			draw_line(detectFace.image, middleNose, leftEye, dlib::rgb_pixel(204, 153, 0));
+			detectFace.DrawLineOnImage(leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));	
+			detectFace.DrawLineOnImage(rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
+			detectFace.DrawLineOnImage(leftTemple, rightTemple, dlib::rgb_pixel(0, 0, 255));
+			detectFace.DrawLineOnImage(middleNose, rightEye, dlib::rgb_pixel(255, 0, 255));
+			detectFace.DrawLineOnImage(middleNose, leftEye, dlib::rgb_pixel(204, 153, 0));
 
 			detectFace.save_processed_file("Result");
 
@@ -150,12 +156,14 @@ namespace FaceLandmarks
 
 			//Wczytanie zdjecia zapisanego przez FaceLandmark 
 			cv::Mat imageToDatabase;
-			cv::Mat processedImage = dlib::toMat(detectFace.image);
+			cv::Mat processedImage = dlib::toMat(detectFace.processedImage);
 			cv::cvtColor(processedImage, imageToDatabase, CV_BGR2RGB);
 
 			cv::namedWindow("Wyniki", cv::WINDOW_NORMAL);
 			cv::imshow("Wyniki", imageToDatabase); //show the image
 			//cv::waitKey(0);
+
+			
 
 			// Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
 			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
@@ -324,8 +332,10 @@ namespace FaceLandmarks
 			cout << "\nexception thrown!" << endl;
 			cout << ex.what() << endl;
 			cin.get();
+			return false;
 		}
 #pragma endregion
 
 	}
+	
 }

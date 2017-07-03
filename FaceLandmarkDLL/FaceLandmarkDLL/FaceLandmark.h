@@ -37,29 +37,23 @@ private:
 	dlib::shape_predictor shapePredictor;
 	///Container for the detected face
 	std::vector<full_object_detection> faces;
-	///windows to show processed images
-	image_window win;
-	image_window winFaces;
-
+	
 public:
+	///Processed image
+	dlib::array2d<dlib::rgb_pixel> processedImage;
 	/// Tymczasowe rozwiazanie TBD funkcja ktora bedzie rysowala po obrazku
-	dlib::array2d<dlib::rgb_pixel> image;
+	void DrawLineOnImage(dlib::point firstPoint, dlib::point secondPoint, dlib::rgb_pixel color);	
 	/// @brief  Constructor - pass image file name to process
 	///[in] name of the file to process
 	FaceLandmark(std::string imageName);
 	/// @brief Constructor - pass openCV mat object
 	///[in] OpenCv mat to process
 	FaceLandmark(cv::Mat imageMat);
-
 	~FaceLandmark();
 
 
 	/// @brief Methood to detect faces on image
 	bool detect_face_and_features();
-	/// @brief Display detected face on image
-	void show_detected_faces();
-	/// @brief Display little images of detected faces
-	void show_face_chips();
 	///  @brief Saving the file
 	/// [in] name of the file to save
 	void save_processed_file(std::string fileName);
