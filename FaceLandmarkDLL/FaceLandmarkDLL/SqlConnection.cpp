@@ -380,10 +380,10 @@ bool SqlConnection::CheckIfKlientExists(int ID, std::string tableName)
 
 int SqlConnection::GetRowCount(sql::SQLString tableName)
 {
-
+	//TODO: Zmienic na to zeby wyszukiwalo najwiekszego ID a nie liczbe ID
 	try {
 		// Nazwa kolumny bazy musi byc znana		
-		sql::SQLString querry = "SELECT COUNT(Id) FROM ";
+		sql::SQLString querry = "SELECT MAX(Id) FROM ";
 		sql::SQLString querrymMid = querry.append(tableName);// WHERE id = "; 	
 
 															 //creating statement and executing querry 

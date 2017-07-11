@@ -54,7 +54,7 @@ namespace FaceLandmarks
 
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
 	//wszystkie napisy które dostajemy ida do okienka output.
-	bool CalculateFrontFeaturePoints(int ID)
+	bool CalculateFrontFeaturePoints(int ID, bool resizeImage, double resizeFactor)
 	{
 		//Kod funkcji main z porgramu FaceLandmark
 		try 
@@ -74,7 +74,14 @@ namespace FaceLandmarks
 
 #pragma endregion
 
+			//TODO: w tym miejschu ewentualnie zmniejszenie rozdzielczosci zdjecia o 2 lub 4 z wykorzystaniem OPEN CV
+			if (resizeImage == true)
+			{
+				cv::resize(imageFromDatabase, imageFromDatabase, cv::Size(0, 0), resizeFactor, resizeFactor, CV_INTER_AREA);
+			}
+
 #pragma region Kalibracja Obrazu
+			
 			//Kalibracja obrazu
 			float calibrationSquareDimension = 8; //mm 14,5 dla tego standardowego 8 dla tego dla okulaorw
 			const cv::Size boardDomensions = cv::Size(3, 3);
@@ -128,6 +135,7 @@ namespace FaceLandmarks
 
 			//TODO: Wyszukiwanie okrêgów w Ÿrenicy w obrêbie maski wyznaczonej przez punkty z dliba w celu lepszego wyszukiwania œrodka oka
 
+
 			//Rysowanie odleglosci na obrazie
 			detectFace.DrawLineOnImage(leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));	
 			detectFace.DrawLineOnImage(rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
@@ -158,9 +166,9 @@ namespace FaceLandmarks
 			cv::Mat imageToDatabase;
 			cv::Mat processedImage = dlib::toMat(detectFace.processedImage);
 			cv::cvtColor(processedImage, imageToDatabase, CV_BGR2RGB);
-
-			cv::namedWindow("Wyniki", cv::WINDOW_NORMAL);
-			cv::imshow("Wyniki", imageToDatabase); //show the image
+			//Wyswietlanie wynikowego zdjecia
+			//cv::namedWindow("Wyniki", cv::WINDOW_NORMAL);
+			//cv::imshow("Wyniki", imageToDatabase); //show the image
 			//cv::waitKey(0);
 
 			

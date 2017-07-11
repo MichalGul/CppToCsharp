@@ -26,6 +26,7 @@ void Calibrate::LoadImageToCalibration(std::string fileName)
 }
 void Calibrate::ShowLoadedImage()
 {
+	cv::namedWindow("Loaded Image", cv::WINDOW_NORMAL);
 	cv::imshow("Loaded Image", image);
 }
 ///Locating Chessboard marker on image writiing and displaying it
@@ -37,8 +38,8 @@ bool Calibrate::FindCorrenrsOnMarker(std::string fileNameToSave)
 	{
 		//drowing points on image
 		cv::drawChessboardCorners(image, boardDimension, points, found);		
-		cv::namedWindow("Kalibracja Obrazu", cv::WINDOW_NORMAL);
-		imshow("Kalibracja Obrazu", image);
+				//cv::namedWindow("Kalibracja Obrazu", cv::WINDOW_NORMAL);
+				//imshow("Kalibracja Obrazu", image);
 		imwrite(fileNameToSave, image);		
 
 	}
