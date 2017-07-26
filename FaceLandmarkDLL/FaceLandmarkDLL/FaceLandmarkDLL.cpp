@@ -51,6 +51,31 @@ namespace FaceLandmarks
 	{
 		cv::destroyAllWindows();
 	}
+	//Funkcja do skalowania wspó³rzêdnych punktów zaznaczanych na obrazie w zale¿noœci od zmniejszenie rozdzielczoœci tego obrazu przy obliczaniu 
+	double AdjustResizeFactor(double resizeFactor)
+	{
+		double pointScalefactor = 0.0;;
+
+		if (resizeFactor == 0.5)
+		{
+			pointScalefactor = 2;
+		}
+		else if (resizeFactor == 0.25)
+		{
+			pointScalefactor = 4;
+		}
+		else if (resizeFactor == 0.125)
+		{
+			pointScalefactor = 8;
+		}
+		else 
+		{
+			pointScalefactor = 1.0;
+		}
+
+		return pointScalefactor;
+
+	}
 
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
 	//wszystkie napisy które dostajemy ida do okienka output.
@@ -67,14 +92,35 @@ namespace FaceLandmarks
 			SqlConnection * Con = new SqlConnection(host, root, pass, databaseName);
 			Con->Connect();
 			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");
+			
 					//cv::imshow("Image", imageFromDatabase); //show the image
 					//cv::waitKey();
 			//Zakonczenie polaczenia
 			delete Con;
 
 #pragma endregion
+#pragma region  Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci w bazie
+			//Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci które bêdzie siedzia³o w bazie
+			//Kalibracja obrazu
+			float calibrationSquareDimensionMaxResolution = 8; //mm 14,5 dla tego standardowego 8 dla tego dla okulaorw
+			const cv::Size boardDomensionsMaxResolution = cv::Size(3, 3);
+			std::vector<cv::Point2f> pointBufMax;
 
-			//TODO: w tym miejschu ewentualnie zmniejszenie rozdzielczosci zdjecia o 2 lub 4 z wykorzystaniem OPEN CV
+			Calibrate calibMaxResolutionImage(calibrationSquareDimensionMaxResolution, pointBufMax, boardDomensionsMaxResolution);
+			//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
+			calibMaxResolutionImage.LoadImageToCalibration(imageFromDatabase);    //LOAD IMAGE FROM DATABASE
+																//calib.ShowLoadedImage();
+			if (calibMaxResolutionImage.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
+			{
+				cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
+				//cv::waitKey();
+
+				return false;
+			}
+			double mmMaxScaleFactor = calibMaxResolutionImage.CalculateScaleFactor();
+#pragma endregion
+			
+			// W tym miejschu ewentualnie zmniejszenie rozdzielczosci zdjecia o 2 lub 4 z wykorzystaniem OPEN CV
 			if (resizeImage == true)
 			{
 				cv::resize(imageFromDatabase, imageFromDatabase, cv::Size(0, 0), resizeFactor, resizeFactor, CV_INTER_AREA);
@@ -147,16 +193,16 @@ namespace FaceLandmarks
 
 
 			//Odczytywanie wspolrzednych punktow			
-			Point2D leftEyeP(leftEye.x(), leftEye.y());
-			Point2D rightEyeP(rightEye.x(), rightEye.y());
+			Point2D leftEyeP(leftEye.x() *AdjustResizeFactor(resizeFactor), leftEye.y()*AdjustResizeFactor(resizeFactor));
+			Point2D rightEyeP(rightEye.x()*AdjustResizeFactor(resizeFactor), rightEye.y()*AdjustResizeFactor(resizeFactor));
 			
-			Point2D rightCheekP(rightCheek.x(), rightCheek.y());
-			Point2D leftCheekP(leftCheek.x(), leftCheek.y());
+			Point2D rightCheekP(rightCheek.x()*AdjustResizeFactor(resizeFactor), rightCheek.y()*AdjustResizeFactor(resizeFactor));
+			Point2D leftCheekP(leftCheek.x()*AdjustResizeFactor(resizeFactor), leftCheek.y()*AdjustResizeFactor(resizeFactor));
 			
-			Point2D rightTempleP(rightTemple.x(), rightTemple.y());
-			Point2D leftTempleP(leftTemple.x(), leftTemple.y());
+			Point2D rightTempleP(rightTemple.x()*AdjustResizeFactor(resizeFactor), rightTemple.y()*AdjustResizeFactor(resizeFactor));
+			Point2D leftTempleP(leftTemple.x()*AdjustResizeFactor(resizeFactor), leftTemple.y()*AdjustResizeFactor(resizeFactor));
 			
-			Point2D noseP(middleNose.x(), middleNose.y());
+			Point2D noseP(middleNose.x()*AdjustResizeFactor(resizeFactor), middleNose.y()*AdjustResizeFactor(resizeFactor));
 
 
 
@@ -221,15 +267,30 @@ namespace FaceLandmarks
 					leftCheekP,
 					rightCheekP,
 					mmScaleFactor,
+					mmMaxScaleFactor,
 					ID		//id klienta
 				);
 			}
-			else
+			//TODO: jak rekord jest juz w tabeli to trzeba wykonaæ polecenie UPDATE po ponownym policzeniu
+			else 
 			{
-				cout << "Rekord ju¿ jest w tabeli" << endl;
+				sendData->CoordinatesUpdateStatement
+				(					
+					leftTempleP,
+					rightTempleP,
+					noseP,
+					leftEyeP,
+					rightEyeP,
+					leftCheekP,
+					rightCheekP,
+					mmScaleFactor,
+					mmMaxScaleFactor,
+					ID		//id klienta
+				);
 			}
 
 			delete sendData;
+			// zwraca prawde jezeli obliczenia zakonczyly sie powodzeniem
 			return true;
 
 #pragma endregion
@@ -291,9 +352,12 @@ namespace FaceLandmarks
 				//Lokalizacja punktu ucha i nosa wykorzystuj¹c skalibrowan¹ szachwonicê i znany rozmiar okularów
 				//TODO: Odleg³oœci wpisywane dla okularów mark8 bez kleju beda rózne w zale¿noœci od okularow
 				std::vector<cv::Point2f> calibratedPoints = profileCalib.GetCalibratedPointsOnChessboard();
-				auto earPoint = profileCalib.GetFeaturePointByDistance(53, 15, calibratedPoints[8]);
-				auto nosePoint = profileCalib.GetFeaturePointByDistance(-38, 0, calibratedPoints[2]);
+				//TODO: lepiej rozwi¹zaæ te magic numbers
 
+				//Dodatnia wartosc na lewo od szachownicy ujemna na prawo
+				auto earPoint = profileCalib.GetFeaturePointByDistance(61, 20, calibratedPoints[4]);
+				auto nosePoint = profileCalib.GetFeaturePointByDistance(-46, 8, calibratedPoints[4]);
+				auto eyePoint = profileCalib.GetFeaturePointByDistance(-33, 18, calibratedPoints[4]);
 				
 				//Wyslanie informacji do bazy
 				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
@@ -310,22 +374,35 @@ namespace FaceLandmarks
 						currentIdCount + 1,
 						Point2D(earPoint.x, earPoint.y), 
 						Point2D(nosePoint.x, nosePoint.y),
+						Point2D(eyePoint.x, eyePoint.y),
 						mmProfileScaleFactor,
 						RoundToTwoDigits(cv::norm(earPoint - nosePoint)*mmProfileScaleFactor),
+						RoundToTwoDigits(cv::norm(eyePoint - nosePoint)*mmProfileScaleFactor),
 						ID		//id klienta
 					);
 					
 				}
 				else
 				{
-					
-					cout << "Dany rekord juz byl w tabeli" << endl;
+					sendData->CoordinatesUpdateStatement //Dodatnie wspolczynika skalowania do tabeli 
+					(
+						
+						Point2D(earPoint.x, earPoint.y),
+						Point2D(nosePoint.x, nosePoint.y),
+						Point2D(eyePoint.x, eyePoint.y),
+						mmProfileScaleFactor,
+						RoundToTwoDigits(cv::norm(earPoint - nosePoint)*mmProfileScaleFactor),
+						RoundToTwoDigits(cv::norm(eyePoint - nosePoint)*mmProfileScaleFactor),
+						ID		//id klienta
+					);
 
 				}
+
 				//Update odleg³oœci w glownej tabeli
 				sendData->CustomerUpdateStatement
 				(
 					RoundToTwoDigits(cv::norm(earPoint - nosePoint)*mmProfileScaleFactor),
+					RoundToTwoDigits(cv::norm(eyePoint - nosePoint)*mmProfileScaleFactor),
 					ID
 				);
 

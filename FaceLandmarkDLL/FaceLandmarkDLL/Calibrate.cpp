@@ -37,10 +37,13 @@ bool Calibrate::FindCorrenrsOnMarker(std::string fileNameToSave)
 	if (found && points.size() <= 9)
 	{
 		//drowing points on image
-		cv::drawChessboardCorners(image, boardDimension, points, found);		
+		cv::Mat chessboardImage;
+		image.copyTo(chessboardImage);
+
+		cv::drawChessboardCorners(chessboardImage, boardDimension, points, found);
 				//cv::namedWindow("Kalibracja Obrazu", cv::WINDOW_NORMAL);
 				//imshow("Kalibracja Obrazu", image);
-		imwrite(fileNameToSave, image);		
+		imwrite(fileNameToSave, chessboardImage);
 
 	}
 	else

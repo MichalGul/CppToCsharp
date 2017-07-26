@@ -97,6 +97,34 @@ dlib::point FaceLandmark::extract_specified_point_from_detected_landmarks(int po
 	return  faces[0].part(pointNumber);
 }
 
+std::vector<dlib::point> FaceLandmark::GetLeftEyePoints()
+{
+	std::vector<dlib::point> leftEyePoints;
+	
+	for (unsigned long i = 42; i <= 47; ++i)
+	{
+		leftEyePoints.push_back(faces[0].part(i));
+		
+	}
+
+	return leftEyePoints;
+}
+
+std::vector<dlib::point> FaceLandmark::GetRightEyePoints()
+{
+
+	std::vector<dlib::point> rightEyePoints;
+
+	for (unsigned long i = 36; i <= 41; ++i)
+	{
+		rightEyePoints.push_back(faces[0].part(i));
+
+	}
+
+	return rightEyePoints;
+
+}
+
 dlib::point FaceLandmark::get_righteye_point()
 {
 	if (faces.empty())

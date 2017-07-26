@@ -50,8 +50,6 @@ public:
 	///[in] OpenCv mat to process
 	FaceLandmark(cv::Mat imageMat);
 	~FaceLandmark();
-
-
 	/// @brief Methood to detect faces on image
 	bool detect_face_and_features();
 	///  @brief Saving the file
@@ -60,6 +58,11 @@ public:
 	/// @brief method for extracting specified points on detected landmarks
 	/// [in] number og the extracted point
 	dlib::point extract_specified_point_from_detected_landmarks(int pointNumber);
+
+	///@bried method for extracting eye point to detect pupil
+	std::vector <dlib::point> GetLeftEyePoints();
+	///@bried method for extracting rigjh eye point to detect pupil
+	std::vector <dlib::point> GetRightEyePoints();
 
 	//TODO: zrobic funkcje getdlibimage ktora po prostu bedzie wczytywac obraz do pola image
 

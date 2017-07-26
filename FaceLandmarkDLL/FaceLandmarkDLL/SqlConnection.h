@@ -38,13 +38,20 @@ public:
 	// Update Current record ind database without updatign foto
 	void CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, int ID);
 	//Update profile distance
-	void CustomerUpdateStatement(double earNoseDistance, int ID);
+	void CustomerUpdateStatement(double earNoseDistance, double eyeNoseDistance, int ID);
 
 	void CustomerInsertStatement();
 	// Insert new set of coordinates to database
 	void CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,
-		Point2D rightCheek, double scaleFactor, int customerID);
-	void CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, double earNoseDistance, int customerID);
+		Point2D rightCheek, double scaleFactor, double scaleFactorMax, int customerID);
+	// Insert new set of coordinates to database form profile picture
+	void CoordinatesInsertStatement(int ID, Point2D Ear, Point2D Nose, Point2D Eye, double profilescaleFactor, double earNoseDistance, double eyeNoseDistance, int customerID);
+	// Update coordinates after recalculation of the front features
+	void CoordinatesUpdateStatement(Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek,
+		Point2D rightCheek, double scaleFactor, double scaleFactorMax, int customerID);
+	// Update coordinates after recalculation of the fron features
+	void CoordinatesUpdateStatement(Point2D Ear, Point2D Nose, Point2D Eye, double profilescaleFactor, double earNoseDistance, double eyeNoseDistance, int customerID);
+
 	//Check if specyfied record with specyfied ID exists in profile points table table xd
 	bool CheckIfKlientExists(int ID, std::string tableName);
 	///@brief Get table row count

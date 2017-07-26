@@ -60,7 +60,7 @@ public:
 	double CalculateScaleFactor();
 	///@brief Return image after calibration
 	cv::Mat GetKalibratedImage();
-	///@brief Locate points specyfied by distance from reference point
+	///@brief Locate points specyfied by distance in mm from reference point
 	///[in] X distance
 	///[in] Y dostance
 	///[in] Reference point

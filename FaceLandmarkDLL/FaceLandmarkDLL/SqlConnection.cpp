@@ -217,14 +217,15 @@ void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth
 
 }
 
-void SqlConnection::CustomerUpdateStatement(double earNoseDistance, int ID)
+void SqlConnection::CustomerUpdateStatement(double earNoseDistance, double eyeNoseDistance, int ID)
 {
 
 	try
 	{
-		pstmt = con->prepareStatement("UPDATE klienci SET Ucho_Nos = ? WHERE id = ?");
+		pstmt = con->prepareStatement("UPDATE klienci SET Ucho_Nos = ?, Oko_Nos = ? WHERE id = ?");
 		pstmt->setDouble(1, earNoseDistance);
-		pstmt->setInt(2, ID);
+		pstmt->setDouble(2, eyeNoseDistance);
+		pstmt->setInt(3, ID);
 		pstmt->execute();
 
 
@@ -254,12 +255,12 @@ void SqlConnection::CustomerInsertStatement()
 
 
 
-void SqlConnection::CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek, Point2D rightCheek, double scaleFactor, int customerID)
+void SqlConnection::CoordinatesInsertStatement(int ID, Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek, Point2D rightCheek, double scaleFactor, double scaleFactorMax, int customerID)
 {
 	try
 	{
 
-		pstmt = con->prepareStatement("INSERT INTO Punkty VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		pstmt = con->prepareStatement("INSERT INTO Punkty VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 		pstmt->setInt(1, ID);
 		pstmt->setInt(2, leftTemple.X);
 		pstmt->setInt(3, leftTemple.Y);
@@ -276,6 +277,93 @@ void SqlConnection::CoordinatesInsertStatement(int ID, Point2D leftTemple, Point
 		pstmt->setInt(14, rightCheek.X);
 		pstmt->setInt(15, rightCheek.Y);
 		pstmt->setDouble(16, scaleFactor);
+		pstmt->setDouble(17, scaleFactorMax);
+		pstmt->setInt(18, customerID);
+
+		if (pstmt->execute())
+		{
+			std::cout << "Wykonano zapytanie" << std::endl;
+		}
+
+
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line "
+			<< __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	}
+
+
+
+
+}
+
+void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Ear, Point2D Nose, Point2D Eye , double profilescaleFactor, double earNoseDistance, double eyeNoseDistance, int customerID)
+{
+	try
+	{
+
+		pstmt = con->prepareStatement("INSERT INTO Punkty_Profil VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		pstmt->setInt(1, ID);
+		pstmt->setInt(2, Ear.X);
+		pstmt->setInt(3, Ear.Y);
+		pstmt->setInt(4, Nose.X);
+		pstmt->setInt(5, Nose.Y);
+		pstmt->setInt(6, Eye.X);
+		pstmt->setInt(7, Eye.Y);
+		pstmt->setDouble(8, earNoseDistance); 
+		pstmt->setDouble(9, eyeNoseDistance);
+		pstmt->setDouble(10, profilescaleFactor);
+		pstmt->setInt(11, customerID);
+
+		if (pstmt->execute())
+		{
+			std::cout << "Wykonano zapytanie" << std::endl;
+		}
+
+
+	}
+	catch (sql::SQLException &e)
+	{
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line "
+			<< __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	}
+
+
+}
+
+void SqlConnection::CoordinatesUpdateStatement(Point2D leftTemple, Point2D rightTemple, Point2D Nose, Point2D leftEye, Point2D rightEye, Point2D leftCheek, Point2D rightCheek, double scaleFactor, double scaleFactorMax, int customerID)
+{
+
+	try
+	{
+
+		pstmt = con->prepareStatement("UPDATE Punkty SET LSkron_X = ?, LSkron_Y = ?, PSkron_X = ?, PSkron_Y= ?, Nos_X =?, Nos_Y=?, LOko_X=?, LOko_Y=?, POko_X = ?, POko_Y = ?, LPol_X =?, LPol_Y =?, PPol_X = ?, PPol_Y =?, WspSkalowania = ?, WspSkalowaniaMax = ? WHERE Id_klienta = ?");
+		
+		pstmt->setInt(1, leftTemple.X);
+		pstmt->setInt(2, leftTemple.Y);
+		pstmt->setInt(3, rightTemple.X);
+		pstmt->setInt(4, rightTemple.Y);
+		pstmt->setInt(5, Nose.X);
+		pstmt->setInt(6, Nose.Y);
+		pstmt->setInt(7, leftEye.X);
+		pstmt->setInt(8, leftEye.Y);
+		pstmt->setInt(9, rightEye.X);
+		pstmt->setInt(10, rightEye.Y);
+		pstmt->setInt(11, leftCheek.X);
+		pstmt->setInt(12, leftCheek.Y);
+		pstmt->setInt(13, rightCheek.X);
+		pstmt->setInt(14, rightCheek.Y);
+		pstmt->setDouble(15, scaleFactor);
+		pstmt->setDouble(16, scaleFactorMax);
 		pstmt->setInt(17, customerID);
 
 		if (pstmt->execute())
@@ -300,20 +388,23 @@ void SqlConnection::CoordinatesInsertStatement(int ID, Point2D leftTemple, Point
 
 }
 
-void SqlConnection::CoordinatesInsertStatement(int ID, Point2D Nose, Point2D Ear, double profilescaleFactor, double earNoseDistance, int customerID)
+void SqlConnection::CoordinatesUpdateStatement(Point2D Ear, Point2D Nose, Point2D Eye, double profilescaleFactor, double earNoseDistance, double eyeNoseDistance, int customerID)
 {
+
 	try
 	{
 
-		pstmt = con->prepareStatement("INSERT INTO Punkty_Profil VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-		pstmt->setInt(1, ID);
-		pstmt->setInt(2, Nose.X);
-		pstmt->setInt(3, Nose.Y);
-		pstmt->setInt(4, Ear.X);
-		pstmt->setInt(5, Ear.Y);
-		pstmt->setDouble(6, earNoseDistance); 
-		pstmt->setDouble(7, profilescaleFactor);
-		pstmt->setInt(8, customerID);
+		pstmt = con->prepareStatement("UPDATE Punkty_Profil SET Ucho_X = ?, Ucho_Y = ?, Nos_X = ?, Nos_Y = ?, Oko_X = ?, Oko_Y = ?, Ucho_Nos = ?, Oko_Nos = ?, WspSkalowania = ? WHERE Id_klienta = ?");		
+		pstmt->setInt(1, Ear.X);
+		pstmt->setInt(2, Ear.Y);
+		pstmt->setInt(3, Nose.X);
+		pstmt->setInt(4, Nose.Y);
+		pstmt->setInt(5, Eye.X);
+		pstmt->setInt(6, Eye.Y);
+		pstmt->setDouble(7, earNoseDistance);
+		pstmt->setDouble(8, eyeNoseDistance);
+		pstmt->setDouble(9, profilescaleFactor);
+		pstmt->setInt(10, customerID);
 
 		if (pstmt->execute())
 		{
@@ -380,7 +471,7 @@ bool SqlConnection::CheckIfKlientExists(int ID, std::string tableName)
 
 int SqlConnection::GetRowCount(sql::SQLString tableName)
 {
-	//TODO: Zmienic na to zeby wyszukiwalo najwiekszego ID a nie liczbe ID
+	
 	try {
 		// Nazwa kolumny bazy musi byc znana		
 		sql::SQLString querry = "SELECT MAX(Id) FROM ";
