@@ -77,11 +77,7 @@ using namespace std;
 
 namespace FaceLandmarks
 {// ¯eby DLL poprawnie zosta³a zaimportowana w programie trzeba do folderu z DLL face landmark wrzucic szystkie dll od wykorzystywanych bibliotek
-	//OpenCv i od mysql.
-	extern "C" { __declspec(dllexport) double Add(double a, double b); }
-	extern "C" { __declspec(dllexport) double Subtract(double a, double b); }
-	extern "C" { __declspec(dllexport) double Multiply(double a, double b); }
-	extern "C" { __declspec(dllexport) double Divide(double a, double b); }
+	//OpenCv i od mysql dlib.	
 	extern "C" { __declspec(dllexport) bool CalculateFrontFeaturePoints(int ID, bool ResizaImage, double resizeFactor); }
 	extern "C" { __declspec(dllexport) bool CalculateProfileFeaturePoints(int ID); }
 	extern "C" { __declspec(dllexport) void CloseAllImageWindows(); }

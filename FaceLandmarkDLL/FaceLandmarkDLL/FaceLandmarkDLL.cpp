@@ -28,29 +28,12 @@ namespace FaceLandmarks
 		return (round(value * 100) / 100);
 
 	}
-
-	double Add(double a, double b)
-	{
-		return a + b;
-	}
-	double Subtract(double a, double b)
-	{
-		return a - b;
-	}
-	double Multiply(double a, double b)
-	{
-		return a*b;
-	}
-	double Divide(double a, double b)
-	{
-		if (b == 0)
-			throw invalid_argument("b cannot be zero!");
-		return a / b;
-	}
+	
 	void CloseAllImageWindows()
 	{
 		cv::destroyAllWindows();
 	}
+
 	//Funkcja do skalowania wspó³rzêdnych punktów zaznaczanych na obrazie w zale¿noœci od zmniejszenie rozdzielczoœci tego obrazu przy obliczaniu 
 	double AdjustResizeFactor(double resizeFactor)
 	{
@@ -77,7 +60,7 @@ namespace FaceLandmarks
 
 	}
 
-	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje
+	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje -> zrobione dlatego funkcje sa bool
 	//wszystkie napisy które dostajemy ida do okienka output.
 	bool CalculateFrontFeaturePoints(int ID, bool resizeImage, double resizeFactor)
 	{
@@ -85,20 +68,22 @@ namespace FaceLandmarks
 		try 
 		{
 #pragma region  Pobranie zdjêcia z bazy danych
+
 			//konwersja int przez string  na SQL string
 			sql::SQLString userIDstring = std::to_string(ID).c_str();
 
 			//Pobranie zdjêcia z bazy danych
 			SqlConnection * Con = new SqlConnection(host, root, pass, databaseName);
 			Con->Connect();
-			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");
-			
-					//cv::imshow("Image", imageFromDatabase); //show the image
-					//cv::waitKey();
+			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");			
+			//cv::imshow("Image", imageFromDatabase); //show the image
+			//cv::waitKey();
 			//Zakonczenie polaczenia
 			delete Con;
 
 #pragma endregion
+
+
 #pragma region  Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci w bazie
 			//Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci które bêdzie siedzia³o w bazie
 			//Kalibracja obrazu
@@ -117,6 +102,7 @@ namespace FaceLandmarks
 
 				return false;
 			}
+
 			double mmMaxScaleFactor = calibMaxResolutionImage.CalculateScaleFactor();
 #pragma endregion
 			
@@ -163,6 +149,7 @@ namespace FaceLandmarks
 			//Show detected faces on window
 			//detectFace.show_detected_faces();
 					//detectFace.show_face_chips();
+
 			//Wyliczenie pozycji Ÿrenic
 			const dlib::point leftEye = detectFace.get_lefteye_point();
 			const dlib::point rightEye = detectFace.get_righteye_point();
@@ -191,7 +178,7 @@ namespace FaceLandmarks
 
 			detectFace.save_processed_file("Result");
 
-
+			//TODO: Tu bedzie podmiana jezeli sie zdecyduje na wymiane wyszukiwania zrenicy
 			//Odczytywanie wspolrzednych punktow			
 			Point2D leftEyeP(leftEye.x() *AdjustResizeFactor(resizeFactor), leftEye.y()*AdjustResizeFactor(resizeFactor));
 			Point2D rightEyeP(rightEye.x()*AdjustResizeFactor(resizeFactor), rightEye.y()*AdjustResizeFactor(resizeFactor));
@@ -271,7 +258,7 @@ namespace FaceLandmarks
 					ID		//id klienta
 				);
 			}
-			//TODO: jak rekord jest juz w tabeli to trzeba wykonaæ polecenie UPDATE po ponownym policzeniu
+			
 			else 
 			{
 				sendData->CoordinatesUpdateStatement
@@ -318,7 +305,6 @@ namespace FaceLandmarks
 #pragma region Przetwarzanie zdjecia z profilu
 			//Przetwarzanie zdjecia z profilu			
 				SqlConnection *ConProfile = new SqlConnection(host,root,pass,databaseName);
-
 				ConProfile->Connect();
 				cv::Mat profileImageFromDatabase = ConProfile->GetProfileImageFromDatabase(userIDstring);//, "Klienci");
 
