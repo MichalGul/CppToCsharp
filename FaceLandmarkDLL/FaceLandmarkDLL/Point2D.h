@@ -11,7 +11,11 @@ public:
 		X = PointX;
 		Y = PointY;
 	}
-
+	Point2D()
+	{
+		X = 0;
+		Y = 0;
+	}
 	~Point2D()
 	{}
 };

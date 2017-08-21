@@ -63,7 +63,7 @@ instructions.  Note that AVX is the fastest but requires a CPU from at least
 #include"FaceLandmark.h"
 #include"SqlConnection.h"
 #include"Point2D.h"
-
+#include"PupilDetector.h"
 
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
@@ -78,7 +78,7 @@ using namespace std;
 namespace FaceLandmarks
 {// ¯eby DLL poprawnie zosta³a zaimportowana w programie trzeba do folderu z DLL face landmark wrzucic szystkie dll od wykorzystywanych bibliotek
 	//OpenCv i od mysql dlib.	
-	extern "C" { __declspec(dllexport) bool CalculateFrontFeaturePoints(int ID, bool ResizaImage, double resizeFactor); }
+	extern "C" { __declspec(dllexport) bool CalculateFrontFeaturePoints(int ID, bool ResizaImage, double resizeFactor, bool useHoughTransformDetection); }
 	extern "C" { __declspec(dllexport) bool CalculateProfileFeaturePoints(int ID); }
 	extern "C" { __declspec(dllexport) void CloseAllImageWindows(); }
 	

@@ -62,7 +62,7 @@ namespace FaceLandmarks
 
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje -> zrobione dlatego funkcje sa bool
 	//wszystkie napisy które dostajemy ida do okienka output.
-	bool CalculateFrontFeaturePoints(int ID, bool resizeImage, double resizeFactor)
+	bool CalculateFrontFeaturePoints(int ID, bool resizeImage, double resizeFactor, bool useHoughTransformDetection)
 	{
 		//Kod funkcji main z porgramu FaceLandmark
 		try 
@@ -99,10 +99,8 @@ namespace FaceLandmarks
 			{
 				cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
 				//cv::waitKey();
-
 				return false;
 			}
-
 			double mmMaxScaleFactor = calibMaxResolutionImage.CalculateScaleFactor();
 #pragma endregion
 			
@@ -146,9 +144,7 @@ namespace FaceLandmarks
 				return false;
 			}
 			
-			//Show detected faces on window
-			//detectFace.show_detected_faces();
-					//detectFace.show_face_chips();
+		
 
 			//Wyliczenie pozycji Ÿrenic
 			const dlib::point leftEye = detectFace.get_lefteye_point();
@@ -167,7 +163,32 @@ namespace FaceLandmarks
 			dlib::point middleNose = detectFace.extract_specified_point_from_detected_landmarks(27);
 
 			//TODO: Wyszukiwanie okrêgów w Ÿrenicy w obrêbie maski wyznaczonej przez punkty z dliba w celu lepszego wyszukiwania œrodka oka
+			bool houghTransformSucces = false;
+			Point2D houghtRightEye(0, 0);
+			Point2D houghLeftEye(0, 0);
 
+			if (useHoughTransformDetection == true)
+			{
+			
+				cv::Point2d rightCheekPoint(detectFace.extract_specified_point_from_detected_landmarks(1).x(), detectFace.extract_specified_point_from_detected_landmarks(1).y());
+				cv::Point2d leftTemplePoint(leftTemple.x(), leftTemple.y());
+				PupilDetector detectEyePupils;
+
+				detectEyePupils.GetImageToProcess(calib.GetKalibratedImage());
+				detectEyePupils.GetCropPoints(rightCheekPoint, leftTemplePoint);
+				houghTransformSucces = detectEyePupils.LookForPupilPoints();
+
+				if (houghTransformSucces == true)
+				{
+					houghtRightEye.X = detectEyePupils.GetrightEyePoint().X;
+					houghtRightEye.Y = detectEyePupils.GetrightEyePoint().Y;
+
+					houghLeftEye.X = detectEyePupils.GetleftEyePoint().X;
+					houghLeftEye.Y = detectEyePupils.GetleftEyePoint().Y;
+				}
+
+
+			}
 
 			//Rysowanie odleglosci na obrazie
 			detectFace.DrawLineOnImage(leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));	
@@ -179,10 +200,23 @@ namespace FaceLandmarks
 			detectFace.save_processed_file("Result");
 
 			//TODO: Tu bedzie podmiana jezeli sie zdecyduje na wymiane wyszukiwania zrenicy
+
+
+			
 			//Odczytywanie wspolrzednych punktow			
 			Point2D leftEyeP(leftEye.x() *AdjustResizeFactor(resizeFactor), leftEye.y()*AdjustResizeFactor(resizeFactor));
 			Point2D rightEyeP(rightEye.x()*AdjustResizeFactor(resizeFactor), rightEye.y()*AdjustResizeFactor(resizeFactor));
-			
+
+			if (houghTransformSucces == true)
+			{
+				leftEyeP.X = houghLeftEye.X*AdjustResizeFactor(resizeFactor);
+				leftEyeP.Y = houghLeftEye.Y*AdjustResizeFactor(resizeFactor);
+
+				rightEyeP.X = houghtRightEye.X*AdjustResizeFactor(resizeFactor);
+				rightEyeP.Y = houghtRightEye.Y*AdjustResizeFactor(resizeFactor);
+
+			}
+
 			Point2D rightCheekP(rightCheek.x()*AdjustResizeFactor(resizeFactor), rightCheek.y()*AdjustResizeFactor(resizeFactor));
 			Point2D leftCheekP(leftCheek.x()*AdjustResizeFactor(resizeFactor), leftCheek.y()*AdjustResizeFactor(resizeFactor));
 			

@@ -58,7 +58,6 @@ public:
 	/// @brief method for extracting specified points on detected landmarks
 	/// [in] number og the extracted point
 	dlib::point extract_specified_point_from_detected_landmarks(int pointNumber);
-
 	///@bried method for extracting eye point to detect pupil
 	std::vector <dlib::point> GetLeftEyePoints();
 	///@bried method for extracting rigjh eye point to detect pupil
