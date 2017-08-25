@@ -25,7 +25,7 @@
 #include"Point2D.h"
 
 
-/** @class FaceLandmark
+/** @class PupilDetector
 * @brief Class detecting eye pupils on front image
 */
 class PupilDetector

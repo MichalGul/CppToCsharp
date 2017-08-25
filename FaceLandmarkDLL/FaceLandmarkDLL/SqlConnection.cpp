@@ -18,7 +18,7 @@ SqlConnection::SqlConnection(sql::SQLString host, sql::SQLString root, sql::SQLS
 
 SqlConnection::~SqlConnection()
 {
-	//cleaning up
+	//Cleaning up
 	delete con;
 	delete stmt;
 	delete res;
@@ -30,8 +30,8 @@ SqlConnection::~SqlConnection()
 void SqlConnection::Connect()
 {
 	try
-	{//Acqire connection
-
+	{
+		//Acqire connection
 		driver = get_driver_instance();
 		if (con = driver->connect(hostName, user, password))
 		{
@@ -40,8 +40,8 @@ void SqlConnection::Connect()
 		con->setSchema(databaseName);
 
 
-
 	}
+
 	//Error description
 	catch (sql::SQLException &e)
 	{
@@ -56,8 +56,8 @@ void SqlConnection::Connect()
 }
 
 
-//Nazwa tabeli jest wpisana na sztywno
-cv::Mat SqlConnection::GetImageFromDatabase(sql::SQLString imageID)//, sql::SQLString tableName)
+
+cv::Mat SqlConnection::GetImageFromDatabase(sql::SQLString imageID)
 {
 	//image from database
 	cv::Mat acquiredImage;
@@ -65,13 +65,10 @@ cv::Mat SqlConnection::GetImageFromDatabase(sql::SQLString imageID)//, sql::SQLS
 	int dataLength = 0;
 
 	try {
-		// Nazwa kolumny bazy musi byc znana		
-		sql::SQLString querry = "SELECT LENGTH(zdjecie), zdjecie FROM klienci WHERE id = ";
+				
+		sql::SQLString querry = "SELECT LENGTH(zdjecie), zdjecie FROM Klienci WHERE id = ";
 		sql::SQLString querrymMid = querry.append(imageID);// WHERE id = "; 	
-
-
-
-														   //creating statement and executing querry 
+													   //creating statement and executing querry 
 		stmt = con->createStatement();
 		res = stmt->executeQuery(querrymMid);
 
@@ -88,7 +85,6 @@ cv::Mat SqlConnection::GetImageFromDatabase(sql::SQLString imageID)//, sql::SQLS
 		acquiredImage = cv::imdecode(imageBuffor, -1);
 
 		delete resultBlob;
-
 		return acquiredImage;
 	}
 
@@ -106,7 +102,7 @@ cv::Mat SqlConnection::GetImageFromDatabase(sql::SQLString imageID)//, sql::SQLS
 
 
 }
-//prawie to samo co metoda pobierana poprzedniego zdjecia 
+
 cv::Mat SqlConnection::GetProfileImageFromDatabase(sql::SQLString imageID)
 {
 	//image from database
@@ -115,11 +111,9 @@ cv::Mat SqlConnection::GetProfileImageFromDatabase(sql::SQLString imageID)
 	int dataLength = 0;
 
 	try {
-		// Nazwa kolumny bazy musi byc znana		
-		sql::SQLString querry = "SELECT LENGTH(zdjecie_profil), zdjecie_profil FROM klienci WHERE id = ";
+				
+		sql::SQLString querry = "SELECT LENGTH(zdjecie_profil), zdjecie_profil FROM Klienci WHERE id = ";
 		sql::SQLString querrymMid = querry.append(imageID);// WHERE id = "; 	
-
-
 
 														   //creating statement and executing querry 
 		stmt = con->createStatement();
@@ -138,8 +132,8 @@ cv::Mat SqlConnection::GetProfileImageFromDatabase(sql::SQLString imageID)
 		acquiredImage = cv::imdecode(imageBuffor, -1);
 
 		delete resultBlob;
-
 		return acquiredImage;
+
 	}
 	catch (sql::SQLException &e)
 	{
@@ -151,19 +145,19 @@ cv::Mat SqlConnection::GetProfileImageFromDatabase(sql::SQLString imageID)
 		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
 	}
 }
-// 
+
 void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, std::istream *imageStream, int ID)
 {
 
 	try
 	{
-		pstmt = con->prepareStatement("UPDATE klienci SET Rozstaw_Zrenic = ?, Szerokosc_Twarzy = ?, Szerokosc_Skroni = ?, PraweOko_Nos = ?, LeweOko_Nos = ?, zdjecie = ? WHERE id = ?");
+		pstmt = con->prepareStatement("UPDATE Klienci SET Rozstaw_Zrenic = ?, Szerokosc_Twarzy = ?, Szerokosc_Skroni = ?, PraweOko_Nos = ?, LeweOko_Nos = ?, zdjecie = ? WHERE id = ?");
 		pstmt->setDouble(1, eyeDistance);
 		pstmt->setDouble(2, faceWidth);
 		pstmt->setDouble(3, templeWidth);
 		pstmt->setDouble(4, rightEyeNoseDist);
 		pstmt->setDouble(5, leftEyeNoseDist);
-		pstmt->setBlob(6, imageStream); // wysyla sie ale trzeba zwiekszyc max_allowed_packet
+		pstmt->setBlob(6, imageStream);
 		pstmt->setInt(7, ID);
 		pstmt->execute();
 
@@ -184,13 +178,13 @@ void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth
 
 
 }
-//Update klients table bez wstawiania zdjecia
+
 void SqlConnection::CustomerUpdateStatement(double eyeDistance, double faceWidth, double templeWidth, double rightEyeNoseDist, double leftEyeNoseDist, int ID)
 {
 
 	try
 	{
-		pstmt = con->prepareStatement("UPDATE klienci SET Rozstaw_Zrenic = ?, Szerokosc_Twarzy = ?, Szerokosc_Skroni = ?, PraweOko_Nos = ?, LeweOko_Nos = ? WHERE id = ?");
+		pstmt = con->prepareStatement("UPDATE Klienci SET Rozstaw_Zrenic = ?, Szerokosc_Twarzy = ?, Szerokosc_Skroni = ?, PraweOko_Nos = ?, LeweOko_Nos = ? WHERE id = ?");
 		pstmt->setDouble(1, eyeDistance);
 		pstmt->setDouble(2, faceWidth);
 		pstmt->setDouble(3, templeWidth);
@@ -222,7 +216,7 @@ void SqlConnection::CustomerUpdateStatement(double earNoseDistance, double eyeNo
 
 	try
 	{
-		pstmt = con->prepareStatement("UPDATE klienci SET Ucho_Nos = ?, Oko_Nos = ? WHERE id = ?");
+		pstmt = con->prepareStatement("UPDATE Klienci SET Ucho_Nos = ?, Oko_Nos = ? WHERE id = ?");
 		pstmt->setDouble(1, earNoseDistance);
 		pstmt->setDouble(2, eyeNoseDistance);
 		pstmt->setInt(3, ID);
@@ -245,12 +239,7 @@ void SqlConnection::CustomerUpdateStatement(double earNoseDistance, double eyeNo
 
 }
 
-// TBD zastanowic sie czy to bedzie tu potrzebne -> update wystarczy
-void SqlConnection::CustomerInsertStatement()
-{
 
-
-}
 
 
 
@@ -426,8 +415,7 @@ void SqlConnection::CoordinatesUpdateStatement(Point2D Ear, Point2D Nose, Point2
 
 }
 
-//Sprawdzenie czy w tabeli jest ju¿ rekors z danym currentID w tabeli Punkty_profil w kolumnie klient ID -> bo jesli jest i bedzie chcia³o siê
-//wstawiæ to bêdzie 
+ 
 bool SqlConnection::CheckIfKlientExists(int ID, std::string tableName)
 {
 	sql::SQLString customerID = std::to_string(ID).c_str();
@@ -473,9 +461,9 @@ int SqlConnection::GetRowCount(sql::SQLString tableName)
 {
 	
 	try {
-		// Nazwa kolumny bazy musi byc znana		
+				
 		sql::SQLString querry = "SELECT MAX(Id) FROM ";
-		sql::SQLString querrymMid = querry.append(tableName);// WHERE id = "; 	
+		sql::SQLString querrymMid = querry.append(tableName);	
 
 															 //creating statement and executing querry 
 		stmt = con->createStatement();

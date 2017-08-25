@@ -7,13 +7,21 @@
 namespace FaceLandmarks
 
 {
-	//Connections Strings
-	sql::SQLString host = "localhost";
+	//Connections Strings local host
+	/*sql::SQLString host = "localhost";
 	sql::SQLString root = "root";
 	sql::SQLString pass = "gulki1";
-	sql::SQLString databaseName = "lista_klientow";
+	sql::SQLString databaseName = "lista_klientow";*/
+	//tested domain
 
-	//Pomocniczna klasa do konwersji vectora charow do istream 
+	sql::SQLString host = "gulczy.ayz.pl";
+	sql::SQLString root = "gulczy_root";
+	sql::SQLString pass = "gulki1";
+	sql::SQLString databaseName = "gulczy_listaKlientow";
+
+	/** @class DataBuf
+	* @brief Class converting char vector to istream buffor
+	*/
 	class DataBuf : public streambuf
 	{
 	public:
@@ -23,18 +31,22 @@ namespace FaceLandmarks
 		}
 	};
 
+	///@brief Round passed value to 2 first digits
+	///[in] value to round
 	double RoundToTwoDigits(double value)
 	{
 		return (round(value * 100) / 100);
 
 	}
-	
+
+	///@brief Close all open cv calculation windows
 	void CloseAllImageWindows()
 	{
 		cv::destroyAllWindows();
 	}
 
-	//Funkcja do skalowania wspó³rzêdnych punktów zaznaczanych na obrazie w zale¿noœci od zmniejszenie rozdzielczoœci tego obrazu przy obliczaniu 
+	///@brief Adjust points coordianates based on resolution scaling
+	///[in] resolution scaling
 	double AdjustResizeFactor(double resizeFactor)
 	{
 		double pointScalefactor = 0.0;;
@@ -62,107 +74,110 @@ namespace FaceLandmarks
 
 	//Obydwie funkcjie dzia³aj¹ TODO: trzeba dodaæ napewno jakieœ komunikaty którê bêd¹ mówiæ o tym co sie kiedy dzieje -> zrobione dlatego funkcje sa bool
 	//wszystkie napisy które dostajemy ida do okienka output.
+
+	/// @brief Start calculation of front feature points and sending data to database
+	/// [in] customer ID
+	/// [in] resolution resize factor
+	/// [in] decision on performing additional pupil detection algorythm
 	bool CalculateFrontFeaturePoints(int ID, bool resizeImage, double resizeFactor, bool useHoughTransformDetection)
 	{
-		//Kod funkcji main z porgramu FaceLandmark
+	
 		try 
 		{
 #pragma region  Pobranie zdjêcia z bazy danych
 
-			//konwersja int przez string  na SQL string
 			sql::SQLString userIDstring = std::to_string(ID).c_str();
-
-			//Pobranie zdjêcia z bazy danych
 			SqlConnection * Con = new SqlConnection(host, root, pass, databaseName);
 			Con->Connect();
-			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);//, "Klienci");			
+			cv::Mat imageFromDatabase = Con->GetImageFromDatabase(userIDstring);			
 			//cv::imshow("Image", imageFromDatabase); //show the image
 			//cv::waitKey();
-			//Zakonczenie polaczenia
 			delete Con;
 
 #pragma endregion
 
 
 #pragma region  Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci w bazie
-			//Kalibracja obrazu dla zdjecia o pe³nej rozdzielczosci które bêdzie siedzia³o w bazie
-			//Kalibracja obrazu
-			float calibrationSquareDimensionMaxResolution = 8; //mm 14,5 dla tego standardowego 8 dla tego dla okulaorw
+			//Calibration of the image with full original resolution
+			float calibrationSquareDimensionMaxResolution = 8;// 8 mm distance for glassed between 2 nearest squares
 			const cv::Size boardDomensionsMaxResolution = cv::Size(3, 3);
 			std::vector<cv::Point2f> pointBufMax;
-
 			Calibrate calibMaxResolutionImage(calibrationSquareDimensionMaxResolution, pointBufMax, boardDomensionsMaxResolution);
 			//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
+
 			calibMaxResolutionImage.LoadImageToCalibration(imageFromDatabase);    //LOAD IMAGE FROM DATABASE
-																//calib.ShowLoadedImage();
+			//calib.ShowLoadedImage();
+
 			if (calibMaxResolutionImage.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
 			{
 				cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
 				//cv::waitKey();
 				return false;
 			}
+
 			double mmMaxScaleFactor = calibMaxResolutionImage.CalculateScaleFactor();
-#pragma endregion
-			
-			// W tym miejschu ewentualnie zmniejszenie rozdzielczosci zdjecia o 2 lub 4 z wykorzystaniem OPEN CV
+
+			//Chacging resolution of the image
 			if (resizeImage == true)
 			{
 				cv::resize(imageFromDatabase, imageFromDatabase, cv::Size(0, 0), resizeFactor, resizeFactor, CV_INTER_AREA);
 			}
 
+
+#pragma endregion
+			
+			
+			
 #pragma region Kalibracja Obrazu
 			
-			//Kalibracja obrazu
-			float calibrationSquareDimension = 8; //mm 14,5 dla tego standardowego 8 dla tego dla okulaorw
+			//Calibration for diffrent resolution of the image
+			float calibrationSquareDimension = 8; // 8 mm distance for glassed between 2 nearest squares
 			const cv::Size boardDomensions = cv::Size(3, 3);
 			std::vector<cv::Point2f> pointBuf;
 
 			Calibrate calib(calibrationSquareDimension, pointBuf, boardDomensions);
 			//calib.LoadImageToCalibration(filename + ".jpg"); //LOADING FROM FILE
 			calib.LoadImageToCalibration(imageFromDatabase);    //LOAD IMAGE FROM DATABASE
-					//calib.ShowLoadedImage();
+			//calib.ShowLoadedImage();
 			if (calib.FindCorrenrsOnMarker("Kalibracja_.jpg") != true)
 				{
-					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;
-					//cv::waitKey();
-
+					cout << "Nie znaleziono markera na obrazie program sie wylaczy" << endl;					
 					return false;
 				}
+
 			double mmScaleFactor = calib.CalculateScaleFactor();	
 			
 #pragma endregion
 
 #pragma region Feature Detection
 
-			// DETECT LANDMARKS -------------------------------------------------------------------------------------------
+			// DETECT LANDMARKS -----------
 			//FaceLandmark detectFace("Kalibracja_" + filename);
 			FaceLandmark detectFace(calib.GetKalibratedImage());	
 			auto isDetected = detectFace.detect_face_and_features();
-			//Jezeli nie wykryto twarzy
+			//Face not detected
 			if(isDetected == false)
 			{
 				return false;
 			}
-			
-		
-
-			//Wyliczenie pozycji Ÿrenic
+					
+			//Calculate pupil coordinates
 			const dlib::point leftEye = detectFace.get_lefteye_point();
 			const dlib::point rightEye = detectFace.get_righteye_point();
-			// Wyliczanie odleg³osci
+			// Calculate distances
 			double eyeDistance = length(leftEye - rightEye);
 			double cheekToCheekDistance = detectFace.calculate_face_width();
 			double templeDistance = detectFace.calculate_temple_distance();
 			std::vector<double> noseToEyesDistances = detectFace.calculate_eye_nose_distance();
 
-			//Wyznaczanie punktow
+			//Calculating points
 			dlib::point rightCheek = detectFace.extract_specified_point_from_detected_landmarks(0);
 			dlib::point leftCheek = detectFace.extract_specified_point_from_detected_landmarks(16);
 			dlib::point rightTemple = detectFace.extract_specified_point_from_detected_landmarks(17);
 			dlib::point leftTemple = detectFace.extract_specified_point_from_detected_landmarks(26);
 			dlib::point middleNose = detectFace.extract_specified_point_from_detected_landmarks(27);
 
-			//TODO: Wyszukiwanie okrêgów w Ÿrenicy w obrêbie maski wyznaczonej przez punkty z dliba w celu lepszego wyszukiwania œrodka oka
+			//Alternative hough transform algorythm
 			bool houghTransformSucces = false;
 			Point2D houghtRightEye(0, 0);
 			Point2D houghLeftEye(0, 0);
@@ -190,7 +205,7 @@ namespace FaceLandmarks
 
 			}
 
-			//Rysowanie odleglosci na obrazie
+			//Drawing lines on result image (optional)
 			detectFace.DrawLineOnImage(leftEye, rightEye, dlib::rgb_pixel(255, 0, 0));	
 			detectFace.DrawLineOnImage(rightCheek, leftCheek, dlib::rgb_pixel(0, 255, 0));
 			detectFace.DrawLineOnImage(leftTemple, rightTemple, dlib::rgb_pixel(0, 0, 255));
@@ -198,9 +213,6 @@ namespace FaceLandmarks
 			detectFace.DrawLineOnImage(middleNose, leftEye, dlib::rgb_pixel(204, 153, 0));
 
 			detectFace.save_processed_file("Result");
-
-			//TODO: Tu bedzie podmiana jezeli sie zdecyduje na wymiane wyszukiwania zrenicy
-
 
 			
 			//Odczytywanie wspolrzednych punktow			
@@ -229,20 +241,17 @@ namespace FaceLandmarks
 
 #pragma region Przygotowanie zdjêcia do wys³ania do bazy
 
-			//Wczytanie zdjecia zapisanego przez FaceLandmark 
+			//Load calculated image
 			cv::Mat imageToDatabase;
 			cv::Mat processedImage = dlib::toMat(detectFace.processedImage);
 			cv::cvtColor(processedImage, imageToDatabase, CV_BGR2RGB);
+
 			//Wyswietlanie wynikowego zdjecia
 			//cv::namedWindow("Wyniki", cv::WINDOW_NORMAL);
 			//cv::imshow("Wyniki", imageToDatabase); //show the image
 			//cv::waitKey(0);
 
-			
-
-			// Kodowanie zdjecia do wyslania do bazy danych -> Tylko do testów
-			// w ostatecznej wersji bez wysy³ania zdjêcia tylko punkty
-
+		
 			std::vector<unsigned char> dataImageBuffer;
 			// KODOWANIE OBRAZU DO BUFFORA
 			cv::imencode(".jpg", imageToDatabase, dataImageBuffer);
@@ -265,14 +274,13 @@ namespace FaceLandmarks
 				RoundToTwoDigits(cheekToCheekDistance*mmScaleFactor),
 				RoundToTwoDigits(templeDistance*mmScaleFactor),
 				RoundToTwoDigits(noseToEyesDistances[0] * mmScaleFactor),
-				RoundToTwoDigits(noseToEyesDistances[1] * mmScaleFactor),
-							//pimage, //TODO: Ostatecznie nie bedzie wysylc przetworzonego zdjecia do bazy
-				ID // id klienta
+				RoundToTwoDigits(noseToEyesDistances[1] * mmScaleFactor),							
+				ID // client ID
 			);
 
 			int currentIdCount = sendData->GetRowCount("Punkty");
 			// Insert to coordinates table
-			//Sprawdzenie czy rekord o danym id klienta juz istnieje
+			//If rekord withid klienta exists
 			bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty");
 
 			if (recordExists == false)
@@ -311,7 +319,7 @@ namespace FaceLandmarks
 			}
 
 			delete sendData;
-			// zwraca prawde jezeli obliczenia zakonczyly sie powodzeniem
+			// Calculation succesful
 			return true;
 
 #pragma endregion
@@ -328,7 +336,8 @@ namespace FaceLandmarks
 
 	}
 
-
+	/// @brief Start calculation of profile feature points and sending data to database
+	/// [in] customer ID
 	bool CalculateProfileFeaturePoints(int ID)
 	{
 		try 
@@ -383,7 +392,7 @@ namespace FaceLandmarks
 				SqlConnection *sendData = new SqlConnection(host, root, pass, databaseName);
 				sendData->Connect();
 				//Sprawdzenie czy dany rekord jest ju¿ w tabeli
-				bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty_profil");
+				bool recordExists = sendData->CheckIfKlientExists(ID, "Punkty_Profil");
 				//jezeli nie ma to dodadajemy do tabeli
 				if (recordExists == false)
 				{
